@@ -42,12 +42,12 @@ class Forgetting(Metric[Union[float, None, Dict[int, float]]]):
         Creates an instance of the standalone Forgetting metric
         """
 
-        self.initial: Dict[int, float] = dict()
+        self.initial: Dict[int, float] = {}
         """
         The initial value for each key.
         """
 
-        self.last: Dict[int, float] = dict()
+        self.last: Dict[int, float] = {}
         """
         The last value detected for each key
         """
@@ -81,7 +81,6 @@ class Forgetting(Metric[Union[float, None, Dict[int, float]]]):
             value recorded for that key.
         """
 
-        forgetting = {}
         if k is not None:
             if k in self.initial and k in self.last:
                 return self.initial[k] - self.last[k]
@@ -91,17 +90,14 @@ class Forgetting(Metric[Union[float, None, Dict[int, float]]]):
         ik = set(self.initial.keys())
         both_keys = list(ik.intersection(set(self.last.keys())))
 
-        for k in both_keys:
-            forgetting[k] = self.initial[k] - self.last[k]
-
-        return forgetting
+        return {k: self.initial[k] - self.last[k] for k in both_keys}
 
     def reset_last(self) -> None:
-        self.last: Dict[int, float] = dict()
+        self.last: Dict[int, float] = {}
 
     def reset(self) -> None:
-        self.initial: Dict[int, float] = dict()
-        self.last: Dict[int, float] = dict()
+        self.initial: Dict[int, float] = {}
+        self.last: Dict[int, float] = {}
 
 
 class GenericExperienceForgetting(PluginMetric[Dict[int, float]]):
@@ -232,10 +228,7 @@ class GenericExperienceForgetting(PluginMetric[Dict[int, float]]):
             metric_name = get_metric_name(self, strategy, add_experience=True)
             plot_x_position = strategy.clock.train_iterations
 
-            metric_values = [
-                MetricValue(self, metric_name, forgetting, plot_x_position)
-            ]
-            return metric_values
+            return [MetricValue(self, metric_name, forgetting, plot_x_position)]
 
     def metric_update(self, strategy):
         raise NotImplementedError
@@ -388,9 +381,7 @@ class GenericStreamForgetting(GenericExperienceForgetting):
 
         phase_name, _ = phase_and_task(strategy)
         stream = stream_type(strategy.experience)
-        metric_name = "{}/{}_phase/{}_stream".format(
-            str(self), phase_name, stream
-        )
+        metric_name = f"{str(self)}/{phase_name}_phase/{stream}_stream"
         plot_x_position = strategy.clock.train_iterations
 
         return [MetricValue(self, metric_name, metric_value, plot_x_position)]
@@ -517,8 +508,7 @@ class BWT(Forgetting):
         """
 
         forgetting = super().result(k)
-        bwt = forgetting_to_bwt(forgetting)
-        return bwt
+        return forgetting_to_bwt(forgetting)
 
 
 class ExperienceBWT(ExperienceForgetting):

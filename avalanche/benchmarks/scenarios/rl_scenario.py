@@ -58,9 +58,7 @@ class RLExperience(CLExperience):
     @property
     def environment(self) -> Env:
         # support dynamic/lazy environment creation
-        if not isinstance(self.env, Env):
-            return self.env()
-        return self.env
+        return self.env if isinstance(self.env, Env) else self.env()
 
 
 class RLScenario(CLScenario):
@@ -113,11 +111,11 @@ class RLScenario(CLScenario):
         assert len(n_parallel_envs) == len(envs)
         # this is so that we can infer the task labels
         assert all(
-            [isinstance(e, Env) for e in envs]
+            isinstance(e, Env) for e in envs
         ), "Lazy instantation of\
             training environments is not supported"
         assert all(
-            [n > 0 for n in n_parallel_envs]
+            n > 0 for n in n_parallel_envs
         ), "Number of parallel environments\
                         must be a positive integer"
         tr_envs = envs

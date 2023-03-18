@@ -117,12 +117,10 @@ class LayerAndParameter(NamedTuple):
 
 
 def get_layers_and_params(model: Module, prefix="") -> List[LayerAndParameter]:
-    result: List[LayerAndParameter] = []
-    for param_name, param in model.named_parameters(recurse=False):
-        result.append(
-            LayerAndParameter(prefix[:-1], model, prefix + param_name, param)
-        )
-
+    result: List[LayerAndParameter] = [
+        LayerAndParameter(prefix[:-1], model, prefix + param_name, param)
+        for param_name, param in model.named_parameters(recurse=False)
+    ]
     layer_name: str
     layer: Module
     for layer_name, layer in model.named_modules():
@@ -137,10 +135,14 @@ def get_layers_and_params(model: Module, prefix="") -> List[LayerAndParameter]:
 
 
 def get_layer_by_name(model: Module, layer_name: str) -> Optional[Module]:
-    for layer_param in get_layers_and_params(model):
-        if layer_param.layer_name == layer_name:
-            return layer_param.layer
-    return None
+    return next(
+        (
+            layer_param.layer
+            for layer_param in get_layers_and_params(model)
+            if layer_param.layer_name == layer_name
+        ),
+        None,
+    )
 
 
 def get_last_fc_layer(model: Module) -> Tuple[str, Linear]:
@@ -166,11 +168,7 @@ def adapt_classification_layer(
     last_fc_layer: Linear
     last_fc_name, last_fc_layer = get_last_fc_layer(model)
 
-    if bias is not None:
-        use_bias = bias
-    else:
-        use_bias = last_fc_layer.bias is not None
-
+    use_bias = bias if bias is not None else last_fc_layer.bias is not None
     new_fc = Linear(last_fc_layer.in_features, num_classes, bias=use_bias)
     swap_last_fc_layer(model, new_fc)
     return last_fc_name, new_fc
@@ -276,7 +274,7 @@ def freeze_up_to(
     frozen_layers = set()
     frozen_parameters = set()
 
-    to_freeze_layers = dict()
+    to_freeze_layers = {}
     for param_def in get_layers_and_params(model, prefix=module_prefix):
         if (
             freeze_until_layer is not None

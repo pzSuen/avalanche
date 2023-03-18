@@ -106,10 +106,7 @@ class StreamingLDA(SupervisedTemplate):
         else:  # no task labels
             feat = self.model(self.mb_x)
         out = self.predict(feat)
-        if return_features:
-            return out, feat
-        else:
-            return out
+        return (out, feat) if return_features else out
 
     def training_epoch(self, **kwargs):
         """
@@ -117,7 +114,7 @@ class StreamingLDA(SupervisedTemplate):
         :param kwargs:
         :return:
         """
-        for _, self.mbatch in enumerate(self.dataloader):
+        for self.mbatch in self.dataloader:
             self._unpack_minibatch()
             self._before_training_iteration(**kwargs)
 
@@ -194,10 +191,7 @@ class StreamingLDA(SupervisedTemplate):
         W = torch.matmul(self.Lambda, M)
         c = 0.5 * torch.sum(M * W, dim=0)
 
-        scores = torch.matmul(X, W) - c
-
-        # return predictions or probabilities
-        return scores
+        return torch.matmul(X, W) - c
 
     def fit_base(self, X, y):
         """
@@ -231,14 +225,13 @@ class StreamingLDA(SupervisedTemplate):
         :return:
         """
         # grab parameters for saving
-        d = dict()
-        d["muK"] = self.muK.cpu()
+        d = {"muK": self.muK.cpu()}
         d["cK"] = self.cK.cpu()
         d["Sigma"] = self.Sigma.cpu()
         d["num_updates"] = self.num_updates
 
         # save model out
-        torch.save(d, os.path.join(save_path, save_name + ".pth"))
+        torch.save(d, os.path.join(save_path, f"{save_name}.pth"))
 
     def load_model(self, save_path, save_name):
         """
@@ -248,7 +241,7 @@ class StreamingLDA(SupervisedTemplate):
         :return:
         """
         # load parameters
-        d = torch.load(os.path.join(save_path, save_name + ".pth"))
+        d = torch.load(os.path.join(save_path, f"{save_name}.pth"))
         self.muK = d["muK"].to(self.device)
         self.cK = d["cK"].to(self.device)
         self.Sigma = d["Sigma"].to(self.device)

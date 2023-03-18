@@ -99,8 +99,7 @@ def main(args):
 
     # TRAINING LOOP
     print("Starting experiment...")
-    for i, exp in enumerate(benchmark.train_stream):
-
+    for exp in benchmark.train_stream:
         # fit SLDA model to batch (one sample at a time)
         cl_strategy.train(exp)
 

@@ -74,9 +74,7 @@ class ElapsedTime(Metric[float]):
 
         :return: The elapsed time, in seconds, as a float value.
         """
-        if self._init_time is None:
-            return 0.0
-        return self._prev_time - self._init_time
+        return 0.0 if self._init_time is None else self._prev_time - self._init_time
 
     def reset(self) -> None:
         """

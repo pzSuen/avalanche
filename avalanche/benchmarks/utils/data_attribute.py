@@ -86,9 +86,7 @@ class DataAttribute:
     def count(self):
         """Dictionary of value -> count."""
         if self._count is None:
-            self._count = {}
-            for val in self.uniques:
-                self._count[val] = 0
+            self._count = {val: 0 for val in self.uniques}
             for val in self.data:
                 self._count[val] += 1
         return self._count
@@ -98,7 +96,7 @@ class DataAttribute:
         """Dictionary mapping unique values to indices."""
         if self._val_to_idx is None:
             # init. val-to-idx
-            self._val_to_idx = dict()
+            self._val_to_idx = {}
             if isinstance(self.data, ConstantSequence):
                 self._val_to_idx = {self.data[0]: range(len(self.data))}
             else:
@@ -142,9 +140,7 @@ class DataAttribute:
         if isinstance(seq, torch.Tensor):
             # equality doesn't work for tensors
             seq = seq.tolist()
-        if not isinstance(seq, FlatData):
-            return FlatData([seq])
-        return seq
+        return seq if isinstance(seq, FlatData) else FlatData([seq])
 
 
 class TaskLabels(DataAttribute):

@@ -68,7 +68,7 @@ class OpenLORIS(DownloadableDataset):
 
         for name in data2download:
             if self.verbose:
-                print("Downloading " + name[1] + "...")
+                print(f"Downloading {name[1]}...")
             file = self._download_file(name[1], name[0], name[2])
             if name[1].endswith(".zip"):
                 if self.verbose:
@@ -84,7 +84,7 @@ class OpenLORIS(DownloadableDataset):
         # any scenario and factor is good here since we want just to load the
         # train images and targets with no particular order
         scen = "domain"
-        factor = [_ for _ in range(4)]
+        factor = list(range(4))
         ntask = 9
 
         print("Loading paths...")
@@ -104,12 +104,11 @@ class OpenLORIS(DownloadableDataset):
             self.LUP = pkl.load(f)
 
         self.idx_list = []
-        if self.train:
-            for fact in factor:
+        for fact in factor:
+            if self.train:
                 for i in range(ntask):
                     self.idx_list += self.LUP[scen][fact][i]
-        else:
-            for fact in factor:
+            else:
                 self.idx_list += self.LUP[scen][fact][-1]
 
         self.paths = []
@@ -136,7 +135,7 @@ class OpenLORIS(DownloadableDataset):
             base_msg += url
             base_msg += "\n"
 
-        base_msg += "and place these files in " + str(self.root)
+        base_msg += f"and place these files in {str(self.root)}"
 
         return base_msg
 
@@ -147,10 +146,7 @@ class OpenLORIS(DownloadableDataset):
             filepath = self.root / name
             if not filepath.is_file():
                 if self.verbose:
-                    print(
-                        "[OpenLORIS] Error checking integrity of:",
-                        str(filepath),
-                    )
+                    print("[OpenLORIS] Error checking integrity of:", filepath)
                 return False
         return True
 

@@ -153,10 +153,7 @@ class TaskAwareLoss(Metric[float]):
 class LossPluginMetric(GenericPluginMetric[float]):
     def __init__(self, reset_at, emit_at, mode, split_by_task=False):
         self.split_by_task = split_by_task
-        if self.split_by_task:
-            self._loss = TaskAwareLoss()
-        else:
-            self._loss = LossMetric()
+        self._loss = TaskAwareLoss() if self.split_by_task else LossMetric()
         super(LossPluginMetric, self).__init__(
             self._loss, reset_at, emit_at, mode
         )

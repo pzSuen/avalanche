@@ -56,9 +56,7 @@ class LazyDatasetSequence(Sequence[make_classification_dataset]):
         The ID of the next experience that will be generated.
         """
 
-        self._loaded_experiences: Dict[
-            int, make_classification_dataset
-        ] = dict()
+        self._loaded_experiences: Dict[int, make_classification_dataset] = {}
         """
         The sequence of experiences obtained from the generator.
         """
@@ -122,7 +120,7 @@ class LazyDatasetSequence(Sequence[make_classification_dataset]):
         :param exp_idx: The ID of the experience.
         :return: The dataset associated to the experience.
         """
-        exp_idx = int(exp_idx)  # Handle single element tensors
+        exp_idx = exp_idx
         self.load_all_experiences(exp_idx)
         if exp_idx not in self._loaded_experiences:
             raise RuntimeError(f"Experience {exp_idx} has been dropped")
@@ -142,7 +140,7 @@ class LazyDatasetSequence(Sequence[make_classification_dataset]):
         :return: The dataset associated to the experience or None if the
             experience has not been loaded yet or if it has been dropped.
         """
-        exp_idx = int(exp_idx)  # Handle single element tensors
+        exp_idx = exp_idx
         if exp_idx >= len(self):
             raise IndexError(
                 f"The stream doesn't contain {exp_idx+1}" f"experiences"
@@ -167,13 +165,13 @@ class LazyDatasetSequence(Sequence[make_classification_dataset]):
         :return: None
         """
 
-        to_exp = int(to_exp)  # Handle single element tensors
+        to_exp = to_exp
         if to_exp < 0:
             return
 
         to_exp = min(to_exp, len(self) - 1)
 
-        for exp_id in range(0, to_exp + 1):
+        for exp_id in range(to_exp + 1):
             if exp_id in self._loaded_experiences:
                 del self._loaded_experiences[exp_id]
 
@@ -187,11 +185,7 @@ class LazyDatasetSequence(Sequence[make_classification_dataset]):
             the whole stream will be loaded.
         :return: None
         """
-        if to_exp is None:
-            to_exp = len(self) - 1
-        else:
-            to_exp = int(to_exp)  # Handle single element tensors
-
+        to_exp = len(self) - 1 if to_exp is None else to_exp
         if to_exp >= len(self):
             raise IndexError(
                 f"The stream doesn't contain {to_exp+1}" f"experiences"

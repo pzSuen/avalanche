@@ -100,26 +100,25 @@ class CLExperience(object):
         Check that ExperienceAttribute are available in train/eval mode.
         """
         v = super().__getattribute__(item)
-        if isinstance(v, ExperienceAttribute):
-            if self._exp_mode == ExperienceMode.TRAIN and v.use_in_train:
-                return v.value
-            elif self._exp_mode == ExperienceMode.EVAL and v.use_in_eval:
-                return v.value
-            elif self._exp_mode == ExperienceMode.LOGGING:
-                return v.value
-            else:
-                mode = (
-                    "train"
-                    if self._exp_mode == ExperienceMode.TRAIN
-                    else "eval"
-                )
-                se = (
-                    f"Attribute {item} is not available for the experience "
-                    f"in {mode} mode."
-                )
-                raise MaskedAttributeError(se)
-        else:
+        if not isinstance(v, ExperienceAttribute):
             return v
+        if self._exp_mode == ExperienceMode.TRAIN and v.use_in_train:
+            return v.value
+        elif self._exp_mode == ExperienceMode.EVAL and v.use_in_eval:
+            return v.value
+        elif self._exp_mode == ExperienceMode.LOGGING:
+            return v.value
+        else:
+            mode = (
+                "train"
+                if self._exp_mode == ExperienceMode.TRAIN
+                else "eval"
+            )
+            se = (
+                f"Attribute {item} is not available for the experience "
+                f"in {mode} mode."
+            )
+            raise MaskedAttributeError(se)
 
     def train(self):
         """Return training experience.
@@ -258,9 +257,9 @@ class CLScenario:
         """
         self._streams = {}
         for s in streams:
-            self._streams[s.name + "_stream"] = s
+            self._streams[f"{s.name}_stream"] = s
         for s in streams:
-            self.__dict__[s.name + "_stream"] = s
+            self.__dict__[f"{s.name}_stream"] = s
 
     @property
     def streams(self):

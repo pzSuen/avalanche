@@ -407,7 +407,7 @@ class PluginTests(unittest.TestCase):
                 scheduler = ReduceLROnPlateau(optimizer)
                 expected_lrs.append([])
                 train_loss = Mean()
-                for epoch in range(n_epochs):
+                for _ in range(n_epochs):
                     train_loss.reset()
                     for x, y, t in TaskBalancedDataLoader(
                         exp.dataset,
@@ -467,12 +467,12 @@ class PluginTests(unittest.TestCase):
             (True, False),
         ):
             with self.subTest(
-                reset_lr=reset_lr,
-                reset_scheduler=reset_scheduler,
-                granularity=granularity,
-                first_epoch_only=first_epoch_only,
-                first_exp_only=first_exp_only,
-            ):
+                        reset_lr=reset_lr,
+                        reset_scheduler=reset_scheduler,
+                        granularity=granularity,
+                        first_epoch_only=first_epoch_only,
+                        first_exp_only=first_exp_only,
+                    ):
                 # First, obtain the reference (expected) lr timeline by running
                 # a plain PyTorch training loop with ReduceLROnPlateau.
                 benchmark, model = _prepare_rng_critical_parts()
@@ -507,9 +507,10 @@ class PluginTests(unittest.TestCase):
                             loss.backward()
                             optimizer.step()
                             if granularity == "iteration":
-                                if epoch == 0 or not first_epoch_only:
-                                    if exp_idx == 0 or not first_exp_only:
-                                        scheduler.step(train_loss.result())
+                                if (epoch == 0 or not first_epoch_only) and (
+                                    exp_idx == 0 or not first_exp_only
+                                ):
+                                    scheduler.step(train_loss.result())
                                 train_loss.reset()
 
                             for group in optimizer.param_groups:
@@ -517,9 +518,10 @@ class PluginTests(unittest.TestCase):
                                 break
 
                         if granularity == "epoch":
-                            if epoch == 0 or not first_epoch_only:
-                                if exp_idx == 0 or not first_exp_only:
-                                    scheduler.step(train_loss.result())
+                            if (epoch == 0 or not first_epoch_only) and (
+                                exp_idx == 0 or not first_exp_only
+                            ):
+                                scheduler.step(train_loss.result())
                             train_loss.reset()
 
                 # Now we have the correct timeline stored in expected_lrs.
@@ -603,12 +605,12 @@ class PluginTests(unittest.TestCase):
             (True, False),
         ):
             with self.subTest(
-                reset_lr=reset_lr,
-                reset_scheduler=reset_scheduler,
-                granularity=granularity,
-                first_epoch_only=first_epoch_only,
-                first_exp_only=first_exp_only,
-            ):
+                        reset_lr=reset_lr,
+                        reset_scheduler=reset_scheduler,
+                        granularity=granularity,
+                        first_epoch_only=first_epoch_only,
+                        first_exp_only=first_exp_only,
+                    ):
                 # print('Start subtest', reset_lr, reset_scheduler, granularity,
                 #       first_epoch_only, first_exp_only)
 
@@ -665,9 +667,10 @@ class PluginTests(unittest.TestCase):
                                         outputs = model(x)
                                         loss = criterion(outputs, y)
                                         val_loss.update(loss, weight=len(x))
-                                if epoch == 0 or not first_epoch_only:
-                                    if exp_idx == 0 or not first_exp_only:
-                                        scheduler.step(val_loss.result())
+                                if (epoch == 0 or not first_epoch_only) and (
+                                    exp_idx == 0 or not first_exp_only
+                                ):
+                                    scheduler.step(val_loss.result())
 
                         if granularity == "epoch":
                             val_loss = Mean()
@@ -682,9 +685,10 @@ class PluginTests(unittest.TestCase):
                                     outputs = model(x)
                                     loss = criterion(outputs, y)
                                     val_loss.update(loss, weight=len(x))
-                            if epoch == 0 or not first_epoch_only:
-                                if exp_idx == 0 or not first_exp_only:
-                                    scheduler.step(val_loss.result())
+                            if (epoch == 0 or not first_epoch_only) and (
+                                exp_idx == 0 or not first_exp_only
+                            ):
+                                scheduler.step(val_loss.result())
 
                 # Now we have the correct timeline stored in expected_lrs
                 # Let's test the plugin!
@@ -926,6 +930,7 @@ class EvaluationPluginTest(unittest.TestCase):
 
 class EarlyStoppingPluginTest(unittest.TestCase):
     def test_early_stop_epochs(self):
+
         class MockEvaluator:
             def __init__(self, clock, metrics):
                 self.clock = clock
@@ -995,7 +1000,7 @@ class EarlyStoppingPluginTest(unittest.TestCase):
         assert p.best_val == 99
 
         # check patience
-        metric_vals = list([1 for _ in range(200)])
+        metric_vals = [1 for _ in range(200)]
         p = EarlyStoppingPlugin(5, val_stream_name="a")
         strat = run_es(metric_vals, p)
         print(f"best step={p.best_step}, val={p.best_val}")

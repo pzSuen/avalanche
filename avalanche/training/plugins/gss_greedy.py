@@ -50,8 +50,7 @@ class GSS_greedyPlugin(SupervisedPlugin):
         w1 = x1.norm(p=2, dim=1, keepdim=True)
 
         w2 = w1 if x2 is x1 else x2.norm(p=2, dim=1, keepdim=True)
-        sim = torch.mm(x1, x2.t()) / (w1 * w2.t()).clamp(min=eps)
-        return sim
+        return torch.mm(x1, x2.t()) / (w1 * w2.t()).clamp(min=eps)
 
     def get_grad_vector(self, pp, grad_dims):
         """
@@ -59,13 +58,11 @@ class GSS_greedyPlugin(SupervisedPlugin):
         """
         grads = torch.zeros(sum(grad_dims), device=self.device)
         grads.fill_(0.0)
-        cnt = 0
-        for param in pp():
+        for cnt, param in enumerate(pp()):
             if param.grad is not None:
                 beg = 0 if cnt == 0 else sum(grad_dims[:cnt])
                 en = sum(grad_dims[: cnt + 1])
                 grads[beg:en].copy_(param.grad.data.view(-1))
-            cnt += 1
         return grads
 
     def get_batch_sim(self, strategy, grad_dims, batch_x, batch_y):
@@ -162,9 +159,7 @@ class GSS_greedyPlugin(SupervisedPlugin):
         if self.ext_mem_list_current_index == 0:
             return
 
-        temp_x_tensors = []
-        for elem in self.ext_mem_list_x:
-            temp_x_tensors.append(elem.to("cpu"))
+        temp_x_tensors = [elem.to("cpu") for elem in self.ext_mem_list_x]
         temp_y_tensors = self.ext_mem_list_y.to("cpu")
 
         memory = list(zip(temp_x_tensors, temp_y_tensors))
@@ -187,11 +182,7 @@ class GSS_greedyPlugin(SupervisedPlugin):
 
         strategy.model.eval()
 
-        # Compute the gradient dimension
-        grad_dims = []
-        for param in strategy.model.parameters():
-            grad_dims.append(param.data.numel())
-
+        grad_dims = [param.data.numel() for param in strategy.model.parameters()]
         place_left = (
             self.ext_mem_list_x.size(0) - self.ext_mem_list_current_index
         )

@@ -294,16 +294,13 @@ class NCScenario(GenericCLScenario["NCExperience"]):
             self.n_classes_per_exp = [default_per_exp_classes] * n_experiences
             for exp_id in per_experience_classes:
                 self.n_classes_per_exp[exp_id] = per_experience_classes[exp_id]
+        elif self.n_classes % n_experiences > 0:
+            raise ValueError(
+                f"Invalid number of experiences: classes contained in "
+                f"dataset ({self.n_classes}) cannot be divided by "
+                f"n_experiences ({n_experiences})"
+            )
         else:
-            # Classes will be equally distributed across the experiences
-            # The amount of classes must be be divisible without remainder
-            # by the number of experiences
-            if self.n_classes % n_experiences > 0:
-                raise ValueError(
-                    f"Invalid number of experiences: classes contained in "
-                    f"dataset ({self.n_classes}) cannot be divided by "
-                    f"n_experiences ({n_experiences})"
-                )
             self.n_classes_per_exp = [
                 self.n_classes // n_experiences
             ] * n_experiences
@@ -317,7 +314,7 @@ class NCScenario(GenericCLScenario["NCExperience"]):
         elif self.class_ids_from_zero_from_first_exp:
             # Method 1: remap class IDs so that they appear in ascending order
             # over all experiences
-            self.classes_order = list(range(0, self.n_classes))
+            self.classes_order = list(range(self.n_classes))
             self.class_mapping = [-1] * n_original_classes
             for class_id in range(n_original_classes):
                 # This check is needed because, when a fixed class order is
@@ -346,7 +343,7 @@ class NCScenario(GenericCLScenario["NCExperience"]):
             # Method 3: no remapping of any kind
             # remapped_id = class_mapping[class_id] -> class_id == remapped_id
             self.classes_order = self.classes_order_original_ids
-            self.class_mapping = list(range(0, n_original_classes))
+            self.class_mapping = list(range(n_original_classes))
 
         original_training_dataset = train_dataset
         original_test_dataset = test_dataset
@@ -482,7 +479,7 @@ class NCScenario(GenericCLScenario["NCExperience"]):
         )
 
     def get_reproducibility_data(self):
-        reproducibility_data = {
+        return {
             "class_ids_from_zero_from_first_exp": bool(
                 self.class_ids_from_zero_from_first_exp
             ),
@@ -496,7 +493,6 @@ class NCScenario(GenericCLScenario["NCExperience"]):
             "n_experiences": int(self.n_experiences),
             "has_task_labels": self._has_task_labels,
         }
-        return reproducibility_data
 
     def classes_in_exp_range(
         self, exp_start: int, exp_end: Optional[int] = None

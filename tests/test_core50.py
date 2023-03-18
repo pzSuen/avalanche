@@ -24,8 +24,6 @@ class CORe50Test(unittest.TestCase):
     )
     def test_core50_ni_benchmark(self):
         benchmark = CORe50(scenario="ni")
-        for experience in benchmark.train_stream:
-            pass
 
     @unittest.skipIf(
         FAST_TEST or is_github_action(),

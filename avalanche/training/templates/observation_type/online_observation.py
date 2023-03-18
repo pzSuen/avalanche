@@ -55,11 +55,10 @@ class OnlineObservation:
         # If strategy has access to the task boundaries, and the current
         # sub-experience is the first sub-experience in the online stream,
         # then adapt the model with the full origin experience:
-        if self.experience.access_task_boundaries:
-            if self.experience.is_first_subexp:
-                self.model = self.model_adaptation()
-                self.make_optimizer()
-        # Otherwise, adapt to the current sub-experience:
-        else:
+        if (
+            self.experience.access_task_boundaries
+            and self.experience.is_first_subexp
+            or not self.experience.access_task_boundaries
+        ):
             self.model = self.model_adaptation()
             self.make_optimizer()

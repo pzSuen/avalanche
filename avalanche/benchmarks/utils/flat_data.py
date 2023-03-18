@@ -79,10 +79,7 @@ class FlatData(IDataset):
         """This method creates indices on-the-fly if self._indices=None.
         Only for internal use. Call may be expensive if self._indices=None.
         """
-        if self._indices is not None:
-            return self._indices
-        else:
-            return list(range(len(self)))
+        return self._indices if self._indices is not None else list(range(len(self)))
 
     def subset(self, indices: List[int]) -> "FlatData":
         """Subsampling operation.
@@ -284,7 +281,7 @@ def _flatten_dataset_list(datasets: List[FlatData]):
     for dataset in flattened_list:
         if (
             isinstance(dataset, FlatData)
-            and len(new_data_list) > 0
+            and new_data_list
             and isinstance(new_data_list[-1], FlatData)
         ):
             merged_ds = _maybe_merge_subsets(new_data_list.pop(), dataset)
@@ -324,12 +321,10 @@ def _flatten_datasets_and_reindex(datasets, indices):
     new_datasets = list(dset_uniques)
     new_dpos = {d: i for i, d in enumerate(new_datasets)}
     new_cumsizes = [0] + ConcatDataset.cumsum(new_datasets)
-    # reindex the indices to account for the new dataset position
-    new_indices = []
-    for d_idx, s_idx in data_sample_pairs:
-        new_d_idx = new_dpos[datasets[d_idx]]
-        new_indices.append(new_cumsizes[new_d_idx] + s_idx)
-
+    new_indices = [
+        new_cumsizes[new_dpos[datasets[d_idx]]] + s_idx
+        for d_idx, s_idx in data_sample_pairs
+    ]
     # NOTE: check disabled to avoid slowing down OCL scenarios
     # if len(new_indices) > 0 and new_cumsizes[-1] > 0:
     #     assert min(new_indices) >= 0
@@ -357,13 +352,10 @@ def _maybe_merge_subsets(d1: FlatData, d2: FlatData):
 def _flatdata_depth(dataset):
     """Internal debugging method.
     Returns the depth of the dataset tree."""
-    if isinstance(dataset, FlatData):
-        dchilds = [_flatdata_depth(dd) for dd in dataset._datasets]
-        if len(dchilds) == 0:
-            return 1
-        return 1 + max(dchilds)
-    else:
+    if not isinstance(dataset, FlatData):
         return 1
+    dchilds = [_flatdata_depth(dd) for dd in dataset._datasets]
+    return 1 + max(dchilds) if dchilds else 1
 
 
 def _flatdata_print(dataset, indent=0):

@@ -103,11 +103,7 @@ def main():
         loggers=[interactive_logger, text_logger, tb_logger],
     )
 
-    if EVALUATION_PROTOCOL == "streaming":
-        seed = None
-    else:
-        seed = 0
-
+    seed = None if EVALUATION_PROTOCOL == "streaming" else 0
     benchmark = CLEAR(
         evaluation_protocol=EVALUATION_PROTOCOL,
         feature_type=CLEAR_FEATURE_TYPE,
@@ -173,15 +169,14 @@ def main():
     metric = CLEARMetric().get_metrics(accuracy_matrix)
     print(metric)
 
-    metric_log = open(ROOT / "metric_log.txt", "w+")
-    metric_log.write(
-        f"Protocol: {EVALUATION_PROTOCOL} "
-        f"Seed: {seed} "
-        f"Feature: {CLEAR_FEATURE_TYPE} \n"
-    )
-    json.dump(accuracy_matrix.tolist(), metric_log, indent=6)
-    json.dump(metric, metric_log, indent=6)
-    metric_log.close()
+    with open(ROOT / "metric_log.txt", "w+") as metric_log:
+        metric_log.write(
+            f"Protocol: {EVALUATION_PROTOCOL} "
+            f"Seed: {seed} "
+            f"Feature: {CLEAR_FEATURE_TYPE} \n"
+        )
+        json.dump(accuracy_matrix.tolist(), metric_log, indent=6)
+        json.dump(metric, metric_log, indent=6)
 
 
 if __name__ == "__main__":

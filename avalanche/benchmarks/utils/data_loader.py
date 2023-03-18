@@ -90,7 +90,7 @@ class TaskBalancedDataLoader:
             )
 
         self.data = data
-        self.dataloaders: Dict[int, DataLoader] = dict()
+        self.dataloaders: Dict[int, DataLoader] = {}
         self.oversample_small_tasks = oversample_small_tasks
 
         # split data by task.
@@ -110,8 +110,7 @@ class TaskBalancedDataLoader:
         self._dl = GroupBalancedDataLoader(datasets=task_datasets, **kwargs)
 
     def __iter__(self):
-        for el in self._dl.__iter__():
-            yield el
+        yield from self._dl.__iter__()
 
     def __len__(self):
         return self._dl.__len__()
@@ -158,11 +157,7 @@ class GroupBalancedDataLoader:
         self.oversample_small_groups = oversample_small_groups
         self.distributed_sampling = distributed_sampling
         self.loader_kwargs = kwargs
-        if "collate_fn" in kwargs:
-            self.collate_fn = kwargs["collate_fn"]
-        else:
-            self.collate_fn = self.datasets[0].collate_fn
-
+        self.collate_fn = kwargs.get("collate_fn", self.datasets[0].collate_fn)
         # collate is done after we have all batches
         # so we set an empty collate for the internal dataloaders
         self.loader_kwargs["collate_fn"] = return_identity
@@ -170,10 +165,7 @@ class GroupBalancedDataLoader:
         # check if batch_size is larger than or equal to the number of datasets
         assert batch_size >= len(datasets)
 
-        # divide the batch between all datasets in the group
-        ds_batch_size = batch_size // len(datasets)
-        remaining = batch_size % len(datasets)
-
+        ds_batch_size, remaining = divmod(batch_size, len(datasets))
         for _ in self.datasets:
             bs = ds_batch_size
             if remaining > 0:
@@ -192,7 +184,7 @@ class GroupBalancedDataLoader:
             for dataset, mb_size in zip(self.datasets, self.batch_sizes)
         ]
 
-        self.max_len = max([len(d) for d in loaders_for_len_estimation])
+        self.max_len = max(len(d) for d in loaders_for_len_estimation)
 
     def __iter__(self):
         dataloaders = []
@@ -208,12 +200,9 @@ class GroupBalancedDataLoader:
             dataloaders.append(data_l)
             samplers.append(data_l_sampler)
 
-        iter_dataloaders = []
-        for dl in dataloaders:
-            iter_dataloaders.append(iter(dl))
-
-        max_num_mbatches = max([len(d) for d in dataloaders])
-        for it in range(max_num_mbatches):
+        iter_dataloaders = [iter(dl) for dl in dataloaders]
+        max_num_mbatches = max(len(d) for d in dataloaders)
+        for _ in range(max_num_mbatches):
             mb_curr = []
             removed_dataloaders_idxs = []
             # copy() is necessary because we may remove keys from the
@@ -306,13 +295,10 @@ class GroupBalancedInfiniteDataLoader:
         self.max_len = 10 ** 10
 
     def __iter__(self):
-        iter_dataloaders = []
-        for dl in self.dataloaders:
-            iter_dataloaders.append(iter(dl))
-
+        iter_dataloaders = [iter(dl) for dl in self.dataloaders]
         while True:
             mb_curr = []
-            for tid, t_loader in enumerate(iter_dataloaders):
+            for t_loader in iter_dataloaders:
                 batch = next(t_loader)
                 mb_curr.append(batch)
             yield self.collate_mbatches(mb_curr)
@@ -376,16 +362,12 @@ class ReplayDataLoader:
         self.memory = memory
         self.oversample_small_tasks = oversample_small_tasks
         self.task_balanced_dataloader = task_balanced_dataloader
-        self.data_batch_sizes: Union[int, Dict[int, int]] = dict()
-        self.memory_batch_sizes: Union[int, Dict[int, int]] = dict()
+        self.data_batch_sizes: Union[int, Dict[int, int]] = {}
+        self.memory_batch_sizes: Union[int, Dict[int, int]] = {}
         self.distributed_sampling = distributed_sampling
         self.loader_kwargs = kwargs
 
-        if "collate_fn" in kwargs:
-            self.collate_fn = kwargs["collate_fn"]
-        else:
-            self.collate_fn = self.data.collate_fn
-
+        self.collate_fn = kwargs.get("collate_fn", self.data.collate_fn)
         # collate is done after we have all batches
         # so we set an empty collate for the internal dataloaders
         self.loader_kwargs["collate_fn"] = lambda x: x
@@ -405,8 +387,7 @@ class ReplayDataLoader:
         # Create dataloader for memory items
         if task_balanced_dataloader:
             num_keys = len(self.memory.targets_task_labels.uniques)
-            single_group_batch_size = batch_size_mem // num_keys
-            remaining_example = batch_size_mem % num_keys
+            single_group_batch_size, remaining_example = divmod(batch_size_mem, num_keys)
         else:
             single_group_batch_size = batch_size_mem
             remaining_example = 0
@@ -446,7 +427,7 @@ class ReplayDataLoader:
                     )[0]
                 )
 
-        self.max_len = max([len(d) for d in loaders_for_len_estimation])
+        self.max_len = max(len(d) for d in loaders_for_len_estimation)
 
     def __iter__(self):
         loader_data, sampler_data = self._create_loaders_and_samplers(
@@ -457,18 +438,14 @@ class ReplayDataLoader:
             self.memory, self.memory_batch_sizes
         )
 
-        iter_data_dataloaders = {}
-        iter_buffer_dataloaders = {}
-
-        for t in loader_data.keys():
-            iter_data_dataloaders[t] = iter(loader_data[t])
-        for t in loader_memory.keys():
-            iter_buffer_dataloaders[t] = iter(loader_memory[t])
-
-        max_len = max([len(d) for d in loader_data.values()])
+        iter_data_dataloaders = {t: iter(loader_data[t]) for t in loader_data.keys()}
+        iter_buffer_dataloaders = {
+            t: iter(loader_memory[t]) for t in loader_memory.keys()
+        }
+        max_len = max(len(d) for d in loader_data.values())
 
         try:
-            for it in range(max_len):
+            for _ in range(max_len):
                 mb_curr = []
                 ReplayDataLoader._get_mini_batch_from_data_dict(
                     iter_data_dataloaders,
@@ -526,8 +503,8 @@ class ReplayDataLoader:
             mb_curr.extend(tbatch)
 
     def _create_loaders_and_samplers(self, data, batch_sizes):
-        loaders = dict()
-        samplers = dict()
+        loaders = {}
+        samplers = {}
 
         if isinstance(batch_sizes, int):
             loader, sampler = _make_data_loader(
@@ -561,7 +538,7 @@ class ReplayDataLoader:
         remaining_example,
         task_balanced_dataloader,
     ):
-        batch_sizes = dict()
+        batch_sizes = {}
         if task_balanced_dataloader:
             for task_id in data_dict.task_set:
                 current_batch_size = single_exp_batch_size

@@ -123,9 +123,7 @@ class HighLevelGeneratorTests(unittest.TestCase):
                 list_paths.append(filelist_path)
                 with open(filelist_path, "w") as wf:
                     for name in filenames_list:
-                        wf.write(
-                            "{} {}\n".format(os.path.join(rel_dir, name), label)
-                        )
+                        wf.write(f"{os.path.join(rel_dir, name)} {label}\n")
 
             generic_benchmark = filelist_benchmark(
                 dirpath,
@@ -247,12 +245,12 @@ class HighLevelGeneratorTests(unittest.TestCase):
         ref_tensor_x = experience_1_x
         ref_tensor_y = experience_1_y
         for exp in data_incremental_instance.train_stream:
-            if exp.current_experience == 8:
-                # Last mini-exp from 1st exp
-                self.assertEqual(4, len(exp.dataset))
-            elif exp.current_experience == 15:
+            if exp.current_experience == 15:
                 # Last mini-exp from 2nd exp
                 self.assertEqual(8, len(exp.dataset))
+            elif exp.current_experience == 8:
+                # Last mini-exp from 1st exp
+                self.assertEqual(4, len(exp.dataset))
             else:
                 # Other mini-exp
                 self.assertEqual(12, len(exp.dataset))
@@ -272,11 +270,9 @@ class HighLevelGeneratorTests(unittest.TestCase):
         exp = data_incremental_instance.test_stream[0]
         self.assertEqual(50, len(exp.dataset))
 
-        tensor_idx = 0
-        for x, y, *_ in exp.dataset:
+        for tensor_idx, (x, y, *_) in enumerate(exp.dataset):
             self.assertTrue(torch.equal(test_x[tensor_idx], x))
             self.assertTrue(torch.equal(test_y[tensor_idx], torch.tensor(y)))
-            tensor_idx += 1
 
     def test_data_incremental_benchmark_from_lazy_benchmark(self):
         pattern_shape = (3, 32, 32)
@@ -303,13 +299,11 @@ class HighLevelGeneratorTests(unittest.TestCase):
 
         def train_gen():
             # Lazy generator of the training stream
-            for dataset in [experience_1_dataset, experience_2_dataset]:
-                yield dataset
+            yield from [experience_1_dataset, experience_2_dataset]
 
         def test_gen():
             # Lazy generator of the test stream
-            for dataset in [experience_test]:
-                yield dataset
+            yield from [experience_test]
 
         initial_benchmark_instance = create_lazy_generic_benchmark(
             train_generator=LazyStreamDefinition(train_gen(), 2, [0, 0]),
@@ -530,13 +524,11 @@ class HighLevelGeneratorTests(unittest.TestCase):
 
                 def train_gen():
                     # Lazy generator of the training stream
-                    for dataset in [experience_1_dataset, experience_2_dataset]:
-                        yield dataset
+                    yield from [experience_1_dataset, experience_2_dataset]
 
                 def test_gen():
                     # Lazy generator of the test stream
-                    for dataset in [experience_test]:
-                        yield dataset
+                    yield from [experience_test]
 
                 initial_benchmark_instance = create_lazy_generic_benchmark(
                     train_generator=LazyStreamDefinition(
@@ -553,11 +545,7 @@ class HighLevelGeneratorTests(unittest.TestCase):
                     lazy_splitting=lazy_option,
                 )
 
-                if lazy_option is None or lazy_option:
-                    expect_laziness = True
-                else:
-                    expect_laziness = False
-
+                expect_laziness = bool(lazy_option is None or lazy_option)
                 self.assertEqual(
                     expect_laziness,
                     valid_benchmark.stream_definitions["train"].is_lazy,

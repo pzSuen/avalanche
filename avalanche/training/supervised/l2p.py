@@ -110,8 +110,9 @@ class LearningToPrompt(SupervisedTemplate):
         )
 
         for n, p in model.named_parameters():
-            if n.startswith(tuple(["blocks", "patch_embed", 
-                                   "cls_token", "norm", "pos_embed"])):
+            if n.startswith(
+                ("blocks", "patch_embed", "cls_token", "norm", "pos_embed")
+            ):
                 p.requires_grad = False
 
         model.head = torch.nn.Linear(768, num_classes).to(device)

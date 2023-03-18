@@ -57,9 +57,7 @@ class Mean(Metric[float]):
 
         :return: The mean, as a float.
         """
-        if self.weight == 0.0:
-            return 0.0
-        return self.summed / self.weight
+        return 0.0 if self.weight == 0.0 else self.summed / self.weight
 
     def reset(self) -> None:
         """

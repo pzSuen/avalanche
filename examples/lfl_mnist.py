@@ -47,9 +47,7 @@ def main(args):
     )
 
     # create strategy
-    assert (
-        len(args.lambda_e) == 1 or len(args.lambda_e) == 5
-    ), "Lambda_e must be a non-empty list."
+    assert len(args.lambda_e) in {1, 5}, "Lambda_e must be a non-empty list."
     lambda_e = args.lambda_e[0] if len(args.lambda_e) == 1 else args.lambda_e
 
     strategy = LFL(

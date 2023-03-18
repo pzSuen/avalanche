@@ -62,10 +62,7 @@ class GenerativeReplayPlugin(SupervisedPlugin):
         """
         super().__init__()
         self.generator_strategy = generator_strategy
-        if self.generator_strategy:
-            self.generator = generator_strategy.model
-        else:
-            self.generator = None
+        self.generator = generator_strategy.model if self.generator_strategy else None
         self.untrained_solver = untrained_solver
         self.model_is_generator = False
         self.replay_size = replay_size
@@ -120,13 +117,12 @@ class GenerativeReplayPlugin(SupervisedPlugin):
         # determine how many replay data points to generate
         if self.replay_size:
             number_replays_to_generate = self.replay_size
+        elif self.increasing_replay_size:
+            number_replays_to_generate = len(strategy.mbatch[0]) * (
+                strategy.experience.current_experience
+            )
         else:
-            if self.increasing_replay_size:
-                number_replays_to_generate = len(strategy.mbatch[0]) * (
-                    strategy.experience.current_experience
-                )
-            else:
-                number_replays_to_generate = len(strategy.mbatch[0])
+            number_replays_to_generate = len(strategy.mbatch[0])
         # extend X with replay data
         replay = self.old_generator.generate(number_replays_to_generate).to(
             strategy.device

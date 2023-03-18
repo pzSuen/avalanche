@@ -64,7 +64,7 @@ def resnet(dataset: str, depth: int, pretrained=False) -> Module:
     :param pretrained: loads model pretrained on `dataset`.
     """
 
-    if dataset in ["cifar10", "cifar100", "svhn"]:
+    if dataset in {"cifar10", "cifar100", "svhn"}:
         available_depths = [20, 56, 110, 1001, 1202]
         model_name = f"resnet{depth}_{dataset}"
     elif dataset == "imagenet":
@@ -79,8 +79,7 @@ def resnet(dataset: str, depth: int, pretrained=False) -> Module:
             f"availble depths are {available_depths}"
         )
 
-    model = ptcv_get_model(model_name, pretrained=pretrained)
-    return model
+    return ptcv_get_model(model_name, pretrained=pretrained)
 
 
 def densenet(dataset: str, depth: int, pretrained=False) -> Module:
@@ -93,7 +92,7 @@ def densenet(dataset: str, depth: int, pretrained=False) -> Module:
                    support dephts (40, 100).
     :param pretrained: load model pretrained on `dataset`..
     """
-    if dataset in ["cifar10", "cifar100", "svhn"]:
+    if dataset in {"cifar10", "cifar100", "svhn"}:
         available_depths = [40, 100]
         # other growth rates are available through the general method.
         growth_rate = 12
@@ -110,8 +109,7 @@ def densenet(dataset: str, depth: int, pretrained=False) -> Module:
             f"availble depths are {available_depths}"
         )
 
-    model = ptcv_get_model(model_name, pretrained=pretrained)
-    return model
+    return ptcv_get_model(model_name, pretrained=pretrained)
 
 
 def pyramidnet(dataset: str, depth: int, pretrained=False) -> Module:
@@ -123,7 +121,7 @@ def pyramidnet(dataset: str, depth: int, pretrained=False) -> Module:
                   The other datasets support dephts (110, 164, 200, 236, 272).
     :param pretrained: load model pretrained on `dataset`..
     """
-    if dataset in ["cifar10", "cifar100", "svhn"]:
+    if dataset in {"cifar10", "cifar100", "svhn"}:
         available_depths = [110, 164, 200, 236, 272]
         alpha = {110: 48, 164: 270, 200: 240, 236: 220, 272: 200}.get(depth)
         if depth < 200:
@@ -144,8 +142,7 @@ def pyramidnet(dataset: str, depth: int, pretrained=False) -> Module:
             f"availble depths are {available_depths}"
         )
 
-    model = ptcv_get_model(model_name, pretrained=pretrained)
-    return model
+    return ptcv_get_model(model_name, pretrained=pretrained)
 
 
 def get_model(name: str, pretrained=False):

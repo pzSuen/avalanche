@@ -37,10 +37,7 @@ class FeatureExtractorBackbone(nn.Module):
         return self.output
 
     def get_name_to_module(self, model):
-        name_to_module = {}
-        for m in model.named_modules():
-            name_to_module[m[0]] = m[1]
-        return name_to_module
+        return {m[0]: m[1] for m in model.named_modules()}
 
     def get_activation(self):
         def hook(model, input, output):
@@ -97,8 +94,12 @@ class MLP(nn.Module):
             if (i < len(hidden_size) - 2) or (
                 (i == len(hidden_size) - 2) and (last_activation)
             ):
-                q.append(("BatchNorm_%d" % i, nn.BatchNorm1d(out_dim)))
-                q.append(("ReLU_%d" % i, nn.ReLU(inplace=True)))
+                q.extend(
+                    (
+                        ("BatchNorm_%d" % i, nn.BatchNorm1d(out_dim)),
+                        ("ReLU_%d" % i, nn.ReLU(inplace=True)),
+                    )
+                )
         self.mlp = nn.Sequential(OrderedDict(q))
 
     def forward(self, x):

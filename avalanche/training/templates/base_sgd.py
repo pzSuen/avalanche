@@ -477,20 +477,11 @@ class PeriodicEval(SupervisedPlugin):
             self._peval(strategy, **kwargs)
 
     def before_training_exp(self, strategy, **kwargs):
-        # We evaluate at the start of each experience because train_epochs
-        # could change.
-        self.do_final = True
-        if self.peval_mode == "epoch":
-            if (
-                self.eval_every > 0
-                and (strategy.train_epochs - 1) % self.eval_every == 0
-            ):
-                self.do_final = False
-        else:  # peval_mode == 'iteration'
-            # we may need to fix this but we don't have a way to know
-            # the number of total iterations.
-            # Right now there may be two eval calls at the last iterations.
-            pass
+        self.do_final = (
+            self.peval_mode != "epoch"
+            or self.eval_every <= 0
+            or (strategy.train_epochs - 1) % self.eval_every != 0
+        )
         self.do_final = self.do_final and self.eval_every > -1
 
     def _peval(self, strategy, **kwargs):

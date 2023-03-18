@@ -50,7 +50,4 @@ class AR1Test(unittest.TestCase):
 
         train_dataset = TensorDataset(train_X, train_y)
         test_dataset = TensorDataset(test_X, test_y)
-        my_nc_benchmark = nc_benchmark(
-            train_dataset, test_dataset, 3, task_labels=False
-        )
-        return my_nc_benchmark
+        return nc_benchmark(train_dataset, test_dataset, 3, task_labels=False)

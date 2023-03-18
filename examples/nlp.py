@@ -157,8 +157,7 @@ class HGNaive(avalanche.training.Naive):
 
     def criterion(self):
         mb_output = self.mb_output.view(-1, self.mb_output.size(-1))
-        ll = self._criterion(mb_output, self.mb_y.view(-1))
-        return ll
+        return self._criterion(mb_output, self.mb_y.view(-1))
 
 
 def main():
@@ -192,7 +191,7 @@ def main():
     )
 
     train_exps = []
-    for i in range(0, 2):
+    for i in range(2):
         # We use very small experiences only to showcase the library.
         # Adapt this to your own benchmark
         exp_data = remote_data["train"].select(range(30 * i, 30 * (i + 1)))

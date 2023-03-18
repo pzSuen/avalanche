@@ -156,10 +156,7 @@ class EvaluationPlugin:
             gathers metric values. a dictionary. If `collect_all`
             is False return an empty dictionary
         """
-        if self.collect_all:
-            return self.all_metric_results
-        else:
-            return {}
+        return self.all_metric_results if self.collect_all else {}
 
     def reset_last_metrics(self):
         """
@@ -185,16 +182,16 @@ class EvaluationPlugin:
 
     def before_eval(self, strategy: "SupervisedTemplate", **kwargs):
         self._update_metrics_and_loggers(strategy, "before_eval")
-        msge = (
-            "Stream provided to `eval` must be the same of the entire "
-            "evaluation stream."
-        )
         if self.strict_checks:
             curr_stream = strategy.current_eval_stream[0].origin_stream
             benchmark = curr_stream[0].origin_stream.benchmark
             full_stream = benchmark.streams[curr_stream.name]
 
             if len(curr_stream) != len(full_stream):
+                msge = (
+                    "Stream provided to `eval` must be the same of the entire "
+                    "evaluation stream."
+                )
                 raise ValueError(msge)
 
 

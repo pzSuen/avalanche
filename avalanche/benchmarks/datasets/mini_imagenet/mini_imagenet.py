@@ -176,7 +176,7 @@ class MiniImageNetDataset(Dataset):
         The list of wnids (the textual class labels, such as "n02119789").
         """
 
-        self.wnid_to_idx: Dict[str, int] = dict()
+        self.wnid_to_idx: Dict[str, int] = {}
         """
         A dictionary mapping wnids to numerical labels in range [0, 100).
         """
@@ -188,7 +188,7 @@ class MiniImageNetDataset(Dataset):
         ('great grey owl', 'great gray owl', 'Strix nebulosa').
         """
 
-        self.class_to_idx: Dict[str, int] = dict()
+        self.class_to_idx: Dict[str, int] = {}
         """
         A dictionary mapping each string of the tuples found in the classes 
         field to their numerical label. That is, this dictionary contains the 
@@ -212,19 +212,17 @@ class MiniImageNetDataset(Dataset):
     @staticmethod
     def get_train_path(root_path: Union[str, Path]):
         root_path = Path(root_path)
-        if (root_path / "train").exists():
-            return root_path / "train"
-        return root_path
+        return root_path / "train" if (root_path / "train").exists() else root_path
 
     def prepare_dataset(self):
         # Read the CSV containing the file list for this split
-        images = dict()
+        images = {}
 
         csv_dir = Path(__file__).resolve().parent / "csv_files"
         if self.split == "all":
             considered_csvs = ["train.csv", "val.csv", "test.csv"]
         else:
-            considered_csvs = [self.split + ".csv"]
+            considered_csvs = [f"{self.split}.csv"]
 
         for csv_name in considered_csvs:
             csv_path = str(csv_dir / csv_name)
@@ -234,7 +232,7 @@ class MiniImageNetDataset(Dataset):
                 next(csv_reader, None)  # Skip header
 
                 for row in csv_reader:
-                    if row[1] in images.keys():
+                    if row[1] in images:
                         images[row[1]].append(row[0])
                     else:
                         images[row[1]] = [row[0]]
@@ -261,14 +259,9 @@ class MiniImageNetDataset(Dataset):
         self.classes = MINI_IMAGENET_CLASSES
         self.class_to_idx = MINI_IMAGENET_CLASS_TO_IDX
 
-        for cls in images.keys():
+        for cls in images:
             cls_numerical_label = self.wnid_to_idx[cls]
-            lst_files = []
-            for file in glob.glob(
-                str(self.imagenet_path / cls / ("*" + cls + "*"))
-            ):
-                lst_files.append(file)
-
+            lst_files = list(glob.glob(str(self.imagenet_path / cls / f"*{cls}*")))
             lst_index = [
                 int(i[i.rfind("_") + 1 : i.rfind(".")]) for i in lst_files
             ]
@@ -315,11 +308,7 @@ if __name__ == "__main__":
 
     for img_idx, (img, label) in enumerate(train_dataset):
         plt.title(
-            "Class {}, {}\n{}".format(
-                label,
-                train_dataset.classes[label],
-                train_dataset.image_paths[0],
-            )
+            f"Class {label}, {train_dataset.classes[label]}\n{train_dataset.image_paths[0]}"
         )
         plt.imshow(img)
         plt.show()
@@ -334,9 +323,7 @@ if __name__ == "__main__":
 
     for img_idx, (img, label) in enumerate(val_dataset):
         plt.title(
-            "Class {}, {}\n{}".format(
-                label, val_dataset.classes[label], val_dataset.image_paths[0]
-            )
+            f"Class {label}, {val_dataset.classes[label]}\n{val_dataset.image_paths[0]}"
         )
         plt.imshow(img)
         plt.show()
@@ -349,9 +336,7 @@ if __name__ == "__main__":
 
     for img_idx, (img, label) in enumerate(test_dataset):
         plt.title(
-            "Class {}, {}\n{}".format(
-                label, test_dataset.classes[label], test_dataset.image_paths[0]
-            )
+            f"Class {label}, {test_dataset.classes[label]}\n{test_dataset.image_paths[0]}"
         )
         plt.imshow(img)
         plt.show()

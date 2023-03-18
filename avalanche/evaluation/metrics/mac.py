@@ -82,7 +82,7 @@ class MAC(Metric[int]):
     @staticmethod
     def is_recognized_module(mod):
         modname = mod.__class__.__name__
-        return modname == "Linear" or modname == "Conv2d"
+        return modname in ["Linear", "Conv2d"]
 
 
 class MACPluginMetric(GenericPluginMetric):

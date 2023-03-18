@@ -31,8 +31,8 @@ class AGEMPlugin(SupervisedPlugin):
 
         super().__init__()
 
-        self.patterns_per_experience = int(patterns_per_experience)
-        self.sample_size = int(sample_size)
+        self.patterns_per_experience = patterns_per_experience
+        self.sample_size = sample_size
 
         self.buffers: List[
             make_classification_dataset
@@ -72,36 +72,37 @@ class AGEMPlugin(SupervisedPlugin):
         """
         Project gradient based on reference gradients
         """
-        if len(self.buffers) > 0:
-            current_gradients = [
-                p.grad.view(-1)
-                if p.grad is not None
-                else torch.zeros(p.numel(), device=strategy.device)
-                for n, p in strategy.model.named_parameters()
-            ]
-            current_gradients = torch.cat(current_gradients)
+        if len(self.buffers) <= 0:
+            return
+        current_gradients = [
+            p.grad.view(-1)
+            if p.grad is not None
+            else torch.zeros(p.numel(), device=strategy.device)
+            for n, p in strategy.model.named_parameters()
+        ]
+        current_gradients = torch.cat(current_gradients)
 
-            assert (
-                current_gradients.shape == self.reference_gradients.shape
-            ), "Different model parameters in AGEM projection"
+        assert (
+            current_gradients.shape == self.reference_gradients.shape
+        ), "Different model parameters in AGEM projection"
 
-            dotg = torch.dot(current_gradients, self.reference_gradients)
-            if dotg < 0:
-                alpha2 = dotg / torch.dot(
-                    self.reference_gradients, self.reference_gradients
-                )
-                grad_proj = (
-                    current_gradients - self.reference_gradients * alpha2
-                )
+        dotg = torch.dot(current_gradients, self.reference_gradients)
+        if dotg < 0:
+            alpha2 = dotg / torch.dot(
+                self.reference_gradients, self.reference_gradients
+            )
+            grad_proj = (
+                current_gradients - self.reference_gradients * alpha2
+            )
 
-                count = 0
-                for n, p in strategy.model.named_parameters():
-                    n_param = p.numel()
-                    if p.grad is not None:
-                        p.grad.copy_(
-                            grad_proj[count : count + n_param].view_as(p)
-                        )
-                    count += n_param
+            count = 0
+            for n, p in strategy.model.named_parameters():
+                n_param = p.numel()
+                if p.grad is not None:
+                    p.grad.copy_(
+                        grad_proj[count : count + n_param].view_as(p)
+                    )
+                count += n_param
 
     def after_training_exp(self, strategy, **kwargs):
         """Update replay memory with patterns from current experience."""

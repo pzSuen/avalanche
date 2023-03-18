@@ -104,11 +104,9 @@ class ResNet(nn.Module):
                           kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * block.expansion),
             )
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers = [block(self.inplanes, planes, stride, downsample)]
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+        layers.extend(block(self.inplanes, planes) for _ in range(1, blocks))
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -136,5 +134,4 @@ def resnet32(pretrained=False, **kwargs):
         raise NotImplementedError
     # change n=3 for ResNet-20, and n=9 for ResNet-56
     n = 5
-    model = ResNet(BasicBlock, [n, n, n], **kwargs)
-    return model
+    return ResNet(BasicBlock, [n, n, n], **kwargs)

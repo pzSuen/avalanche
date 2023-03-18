@@ -292,22 +292,26 @@ class StrategyTest(unittest.TestCase):
         self.run_strategy(benchmark, strategy)
 
     def test_joint(self):
+
+
+
         class JointSTestPlugin(SupervisedPlugin):
             def __init__(self, benchmark):
                 super().__init__()
                 self.benchmark = benchmark
 
             def after_train_dataset_adaptation(
-                self, strategy: "SupervisedTemplate", **kwargs
-            ):
+                        self, strategy: "SupervisedTemplate", **kwargs
+                    ):
                 """
                 Check that the dataset used for training contains the
                 correct number of samples.
                 """
-                cum_len = sum(
-                    [len(exp.dataset) for exp in self.benchmark.train_stream]
-                )
+                cum_len = sum(len(exp.dataset) for exp in self.benchmark.train_stream)
                 assert len(strategy.adapted_dataset) == cum_len
+
+                # SIT scenario
+
 
         # SIT scenario
         model, optimizer, criterion, benchmark = self.init_scenario(
@@ -365,10 +369,7 @@ class StrategyTest(unittest.TestCase):
         )
         self.run_strategy(benchmark, strategy)
 
-        dict_past_j = {}
-        for cls in range(benchmark.n_classes):
-            dict_past_j[cls] = 0
-
+        dict_past_j = {cls: 0 for cls in range(benchmark.n_classes)}
         # Check past_j SIT
         for exp in benchmark.train_stream:
             for cls in set(exp.dataset.targets):
@@ -391,13 +392,7 @@ class StrategyTest(unittest.TestCase):
             train_mb_size=64,
             device=self.device,
         )
-        # self.run_strategy(benchmark, strategy)
-
-        # Check past_j MT
-        dict_past_j = {}
-        for cls in range(benchmark.n_classes):
-            dict_past_j[cls] = 0
-
+        dict_past_j = {cls: 0 for cls in range(benchmark.n_classes)}
         for exp in benchmark.train_stream:
             for cls, numcls in set(exp.dataset.targets.count.items()):
                 dict_past_j[cls] += numcls
@@ -1024,21 +1019,15 @@ class StrategyTest(unittest.TestCase):
 
     def get_model(self, fast_test=False, multi_task=False):
         if fast_test:
-            if multi_task:
-                model = MTSimpleMLP(input_size=6, hidden_size=10)
-            else:
-                model = SimpleMLP(input_size=6, hidden_size=10)
-            # model.classifier = IncrementalClassifier(
-            #     model.classifier.in_features)
-            return model
+            return (
+                MTSimpleMLP(input_size=6, hidden_size=10)
+                if multi_task
+                else SimpleMLP(input_size=6, hidden_size=10)
+            )
+        elif multi_task:
+            return MTSimpleMLP()
         else:
-            if multi_task:
-                model = MTSimpleMLP()
-            else:
-                model = SimpleMLP()
-            # model.classifier = IncrementalClassifier(
-            #     model.classifier.in_features)
-            return model
+            return SimpleMLP()
 
     def run_strategy(self, benchmark, cl_strategy):
         print("Starting experiment...")

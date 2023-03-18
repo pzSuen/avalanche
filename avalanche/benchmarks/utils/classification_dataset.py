@@ -227,7 +227,7 @@ def make_classification_dataset(
         das.append(targets)
     if task_labels is not None:
         das.append(task_labels)
-    if len(das) == 0:
+    if not das:
         das = None
 
     data = ClassificationDataset(
@@ -272,21 +272,21 @@ def _init_transform_groups(
             initial_transform_group = "train"
 
     if transform_groups is None:
-        if target_transform is None and transform is None:
-            tgs = None
-        else:
-            tgs = TransformGroups(
+        return (
+            None
+            if target_transform is None and transform is None
+            else TransformGroups(
                 {
                     "train": (transform, target_transform),
                     "eval": (transform, target_transform),
                 },
                 current_group=initial_transform_group,
             )
+        )
     else:
-        tgs = TransformGroups(
+        return TransformGroups(
             transform_groups, current_group=initial_transform_group
         )
-    return tgs
 
 
 def _check_groups_dict_format(groups_dict):
@@ -316,22 +316,17 @@ def _init_targets(dataset, targets, check_shape=True):
             targets = ConstantSequence(targets, len(dataset))
         elif len(targets) != len(dataset) and check_shape:
             raise ValueError(
-                "Invalid amount of target labels. It must be equal to the "
-                "number of patterns in the dataset. Got {}, expected "
-                "{}!".format(len(targets), len(dataset))
+                f"Invalid amount of target labels. It must be equal to the number of patterns in the dataset. Got {len(targets)}, expected {len(dataset)}!"
             )
         return DataAttribute(targets, "targets")
 
     if isinstance(dataset, ClassificationDataset):
         return None  # targets are initialized automatically
-    else:
-        targets = _traverse_supported_dataset(dataset, _select_targets)
-        if isinstance(targets, torch.Tensor):
-            targets = targets.tolist()
+    targets = _traverse_supported_dataset(dataset, _select_targets)
+    if isinstance(targets, torch.Tensor):
+        targets = targets.tolist()
 
-    if targets is None:
-        return None
-    return DataAttribute(targets, "targets")
+    return None if targets is None else DataAttribute(targets, "targets")
 
 
 def _init_task_labels(dataset, task_labels, check_shape=True):
@@ -342,19 +337,16 @@ def _init_task_labels(dataset, task_labels, check_shape=True):
             task_labels = ConstantSequence(task_labels, len(dataset))
         elif len(task_labels) != len(dataset) and check_shape:
             raise ValueError(
-                "Invalid amount of task labels. It must be equal to the "
-                "number of patterns in the dataset. Got {}, expected "
-                "{}!".format(len(task_labels), len(dataset))
+                f"Invalid amount of task labels. It must be equal to the number of patterns in the dataset. Got {len(task_labels)}, expected {len(dataset)}!"
             )
         tls = SubSequence(task_labels, converter=int)
+    elif isinstance(dataset, ClassificationDataset):
+        tls = None
     else:
-        if isinstance(dataset, ClassificationDataset):
-            tls = None
-        else:
-            task_labels = _traverse_supported_dataset(
-                dataset, _select_task_labels
-            )
-            tls = SubSequence(task_labels, converter=int)
+        task_labels = _traverse_supported_dataset(
+            dataset, _select_task_labels
+        )
+        tls = SubSequence(task_labels, converter=int)
 
     if tls is None:
         return None
@@ -441,18 +433,17 @@ def classification_subset(
         `collate_fn` field exists in the dataset. If no such field exists,
         the default collate function will be used.
     """
-    if isinstance(dataset, ClassificationDataset):
-        if (
-            class_mapping is None
-            and transform is None
-            and target_transform is None
-            and transform_groups is None
-            and initial_transform_group is None
-            and task_labels is None
-            and targets is None
-            and collate_fn is None
-        ):
-            return dataset.subset(indices)
+    if isinstance(dataset, ClassificationDataset) and (
+        class_mapping is None
+        and transform is None
+        and target_transform is None
+        and transform_groups is None
+        and initial_transform_group is None
+        and task_labels is None
+        and targets is None
+        and collate_fn is None
+    ):
+        return dataset.subset(indices)
 
     targets = _init_targets(dataset, targets, check_shape=False)
     task_labels = _init_task_labels(dataset, task_labels, check_shape=False)
@@ -506,7 +497,7 @@ def classification_subset(
         else:
             das.append(task_labels)
 
-    if len(das) == 0:
+    if not das:
         das = None
 
     return ClassificationDataset(
@@ -569,7 +560,7 @@ def make_tensor_classification_dataset(
         patterns. In the future this function may become the function
         used in the data loading process, too.
     """
-    if len(dataset_tensors) < 1:
+    if not dataset_tensors:
         raise ValueError("At least one sequence must be passed")
 
     if targets is None:
@@ -713,7 +704,7 @@ def concat_classification_datasets(
         and task_labels is None
         and targets is None
         and collate_fn is None
-        and len(datasets) > 0
+        and datasets
     ):
         d0 = datasets[0]
         if isinstance(d0, ClassificationDataset):
@@ -722,7 +713,7 @@ def concat_classification_datasets(
             return d0
 
     das = []
-    if len(dds) > 0:
+    if dds:
         #######################################
         # TRANSFORMATION GROUPS
         #######################################
@@ -740,24 +731,19 @@ def concat_classification_datasets(
                 if isinstance(d_set, AvalancheDataset):
                     if uniform_group is None:
                         uniform_group = d_set._transform_groups.current_group
-                    else:
-                        if (
+                    elif (
                             uniform_group
                             != d_set._transform_groups.current_group
                         ):
-                            uniform_group = None
-                            break
+                        uniform_group = None
+                        break
 
-            if uniform_group is None:
-                initial_transform_group = "train"
-            else:
-                initial_transform_group = uniform_group
-
+            initial_transform_group = "train" if uniform_group is None else uniform_group
         #######################################
         # DATA ATTRIBUTES
         #######################################
 
-        totlen = sum([len(d) for d in datasets])
+        totlen = sum(len(d) for d in datasets)
         if (
             task_labels is not None
         ):  # User defined targets always take precedence
@@ -765,9 +751,7 @@ def concat_classification_datasets(
                 task_labels = ConstantSequence(task_labels, totlen)
             elif len(task_labels) != totlen:
                 raise ValueError(
-                    "Invalid amount of target labels. It must be equal to the "
-                    "number of patterns in the dataset. Got {}, expected "
-                    "{}!".format(len(task_labels), totlen)
+                    f"Invalid amount of target labels. It must be equal to the number of patterns in the dataset. Got {len(task_labels)}, expected {totlen}!"
                 )
             das.append(
                 DataAttribute(
@@ -780,12 +764,10 @@ def concat_classification_datasets(
                 targets = ConstantSequence(targets, totlen)
             elif len(targets) != totlen:
                 raise ValueError(
-                    "Invalid amount of target labels. It must be equal to the "
-                    "number of patterns in the dataset. Got {}, expected "
-                    "{}!".format(len(targets), totlen)
+                    f"Invalid amount of target labels. It must be equal to the number of patterns in the dataset. Got {len(targets)}, expected {totlen}!"
                 )
             das.append(DataAttribute(targets, "targets"))
-    if len(das) == 0:
+    if not das:
         das = None
     data = ClassificationDataset(
         dds, transform_groups=transform_groups, data_attributes=das
@@ -827,11 +809,12 @@ def _select_task_labels(dataset, indices):
         if isinstance(dataset, (Subset, ConcatDataset)):
             return None  # Continue traversing
 
-    if found_task_labels is None:
-        if indices is None:
-            return ConstantSequence(0, len(dataset))
-        return ConstantSequence(0, len(indices))
-
+        else:
+            return (
+                ConstantSequence(0, len(dataset))
+                if indices is None
+                else ConstantSequence(0, len(indices))
+            )
     if indices is not None:
         found_task_labels = SubSequence(found_task_labels, indices=indices)
 
@@ -873,8 +856,6 @@ def _traverse_supported_dataset(
         datasets_to_indexes = defaultdict(list)
         indexes_to_dataset = []
         datasets_len = []
-        recursion_result = []
-
         all_size = 0
         for c_dataset in dataset.datasets:
             len_dataset = len(c_dataset)
@@ -888,17 +869,16 @@ def _traverse_supported_dataset(
             datasets_to_indexes[dataset_idx].append(pattern_idx)
             indexes_to_dataset.append(dataset_idx)
 
-        for dataset_idx, c_dataset in enumerate(dataset.datasets):
-            recursion_result.append(
-                deque(
-                    _traverse_supported_dataset(
-                        c_dataset,
-                        values_selector,
-                        datasets_to_indexes[dataset_idx],
-                    )
+        recursion_result = [
+            deque(
+                _traverse_supported_dataset(
+                    c_dataset,
+                    values_selector,
+                    datasets_to_indexes[dataset_idx],
                 )
             )
-
+            for dataset_idx, c_dataset in enumerate(dataset.datasets)
+        ]
         result = []
         for idx in range(len(indices)):
             dataset_idx = indexes_to_dataset[idx]

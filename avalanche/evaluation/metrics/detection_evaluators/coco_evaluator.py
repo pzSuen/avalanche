@@ -142,9 +142,7 @@ class CocoEvaluator:
                 self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type]
             )
 
-        if dist.is_initialized():
-            return dist.get_rank() == 0
-        return True
+        return dist.get_rank() == 0 if dist.is_initialized() else True
 
     def evaluate(self):
         main_process = self.synchronize_between_processes()
@@ -160,7 +158,7 @@ class CocoEvaluator:
                 with redirect_stdout(io.StringIO()):
                     eval_data.summarize()
                 metrics_stats = eval_data.stats
-                if iou == "segm" or iou == "bbox":
+                if iou in ["segm", "bbox"]:
                     for metric_name, metric_value in zip(
                         COCO_STATS_DET_ORDER, metrics_stats
                     ):
@@ -286,17 +284,11 @@ def convert_to_xywh(boxes):
 
 
 def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
+    return bool(dist.is_initialized()) if dist.is_available() else False
 
 
 def get_world_size():
-    if not is_dist_avail_and_initialized():
-        return 1
-    return dist.get_world_size()
+    return dist.get_world_size() if is_dist_avail_and_initialized() else 1
 
 
 def all_gather(data):
@@ -323,10 +315,7 @@ def merge(img_ids, eval_imgs):
     for p in all_img_ids:
         merged_img_ids.extend(p)
 
-    merged_eval_imgs = []
-    for p in all_eval_imgs:
-        merged_eval_imgs.append(p)
-
+    merged_eval_imgs = list(all_eval_imgs)
     merged_img_ids = np.array(merged_img_ids)
     merged_eval_imgs = np.concatenate(merged_eval_imgs, 2)
 

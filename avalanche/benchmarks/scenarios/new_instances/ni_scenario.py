@@ -154,7 +154,7 @@ class NIScenario(GenericCLScenario["NIExperience"]):
         """
 
         if fixed_exp_assignment:
-            included_patterns = list()
+            included_patterns = []
             for exp_def in fixed_exp_assignment:
                 included_patterns.extend(exp_def)
             subset = classification_subset(
@@ -178,17 +178,13 @@ class NIScenario(GenericCLScenario["NIExperience"]):
         """ This field contains, for each training experience, the number of
         instances of each class assigned to that experience. """
 
-        if reproducibility_data or fixed_exp_assignment:
-            # fixed_patterns_assignment/reproducibility_data is the user
-            # provided pattern assignment. All we have to do is populate
-            # remaining fields of the class!
-            # n_patterns_per_experience is filled later based on exp_structure
-            # so we only need to fill exp_structure.
-
-            if reproducibility_data:
-                exp_patterns = self.train_exps_patterns_assignment
-            else:
-                exp_patterns = fixed_exp_assignment
+        if reproducibility_data:
+            exp_patterns = self.train_exps_patterns_assignment
+            self.exp_structure = _exp_structure_from_assignment(
+                train_dataset, exp_patterns, self.n_classes
+            )
+        elif fixed_exp_assignment:
+            exp_patterns = fixed_exp_assignment
             self.exp_structure = _exp_structure_from_assignment(
                 train_dataset, exp_patterns, self.n_classes
             )
@@ -368,8 +364,7 @@ class NIScenario(GenericCLScenario["NIExperience"]):
                     for pattern_idx in patterns_order
                 ]
 
-                avg_exp_size = len(patterns_order) // n_experiences
-                n_remaining = len(patterns_order) % n_experiences
+                avg_exp_size, n_remaining = divmod(len(patterns_order), n_experiences)
                 prev_idx = 0
                 for exp_id in range(n_experiences):
                     next_idx = prev_idx + avg_exp_size
@@ -443,11 +438,10 @@ class NIScenario(GenericCLScenario["NIExperience"]):
         )
 
     def get_reproducibility_data(self) -> Dict[str, Any]:
-        reproducibility_data = {
+        return {
             "exps_patterns_assignment": self.train_exps_patterns_assignment,
             "has_task_labels": bool(self._has_task_labels),
         }
-        return reproducibility_data
 
 
 class NIExperience(

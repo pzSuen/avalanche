@@ -14,17 +14,14 @@ from avalanche.benchmarks.utils import make_tensor_classification_dataset
 
 class GenericCLScenarioTests(unittest.TestCase):
     def test_classes_in_exp(self):
-        train_exps = []
-
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 70, (200,))
         tensor_t = torch.randint(0, 5, (200,))
-        train_exps.append(
+        train_exps = [
             make_tensor_classification_dataset(
                 tensor_x, tensor_y, task_labels=tensor_t
             )
-        )
-
+        ]
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 100, (200,))
         tensor_t = torch.randint(0, 5, (200,))
@@ -34,26 +31,20 @@ class GenericCLScenarioTests(unittest.TestCase):
             )
         )
 
-        test_exps = []
         test_x = torch.rand(200, 3, 28, 28)
         test_y = torch.randint(100, 200, (200,))
         test_t = torch.randint(0, 5, (200,))
-        test_exps.append(
-            make_tensor_classification_dataset(
-                test_x, test_y, task_labels=test_t
-            )
-        )
-
-        other_stream_exps = []
+        test_exps = [
+            make_tensor_classification_dataset(test_x, test_y, task_labels=test_t)
+        ]
         other_x = torch.rand(200, 3, 28, 28)
         other_y = torch.randint(400, 600, (200,))
         other_t = torch.randint(0, 5, (200,))
-        other_stream_exps.append(
+        other_stream_exps = [
             make_tensor_classification_dataset(
                 other_x, other_y, task_labels=other_t
             )
-        )
-
+        ]
         benchmark_instance = dataset_benchmark(
             train_datasets=train_exps,
             test_datasets=test_exps,
@@ -97,17 +88,14 @@ class GenericCLScenarioTests(unittest.TestCase):
         self.assertLess(other_0_classes_max, 600)
 
     def test_classes_in_this_experience(self):
-        train_exps = []
-
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 70, (200,))
         tensor_t = torch.randint(0, 5, (200,))
-        train_exps.append(
+        train_exps = [
             make_tensor_classification_dataset(
                 tensor_x, tensor_y, task_labels=tensor_t
             )
-        )
-
+        ]
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 100, (200,))
         tensor_t = torch.randint(0, 5, (200,))
@@ -117,26 +105,20 @@ class GenericCLScenarioTests(unittest.TestCase):
             )
         )
 
-        test_exps = []
         test_x = torch.rand(200, 3, 28, 28)
         test_y = torch.randint(100, 200, (200,))
         test_t = torch.randint(0, 5, (200,))
-        test_exps.append(
-            make_tensor_classification_dataset(
-                test_x, test_y, task_labels=test_t
-            )
-        )
-
-        other_stream_exps = []
+        test_exps = [
+            make_tensor_classification_dataset(test_x, test_y, task_labels=test_t)
+        ]
         other_x = torch.rand(200, 3, 28, 28)
         other_y = torch.randint(400, 600, (200,))
         other_t = torch.randint(0, 5, (200,))
-        other_stream_exps.append(
+        other_stream_exps = [
             make_tensor_classification_dataset(
                 other_x, other_y, task_labels=other_t
             )
-        )
-
+        ]
         benchmark_instance = dataset_benchmark(
             train_datasets=train_exps,
             test_datasets=test_exps,
@@ -183,18 +165,15 @@ class GenericCLScenarioTests(unittest.TestCase):
 
         def train_gen():
             # Lazy generator of the training stream
-            for dataset in train_exps:
-                yield dataset
+            yield from train_exps
 
         def test_gen():
             # Lazy generator of the test stream
-            for dataset in test_exps:
-                yield dataset
+            yield from test_exps
 
         def other_gen():
             # Lazy generator of the "other" stream
-            for dataset in other_stream_exps:
-                yield dataset
+            yield from other_stream_exps
 
         benchmark_instance = GenericCLScenario(
             stream_definitions=dict(
@@ -519,17 +498,14 @@ class GenericCLScenarioTests(unittest.TestCase):
             exp_1 = benchmark_instance.train_stream[1]
 
     def _make_tensor_datasets(self):
-        train_exps = []
-
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 70, (200,))
         tensor_t = torch.randint(0, 5, (200,))
-        train_exps.append(
+        train_exps = [
             make_tensor_classification_dataset(
                 tensor_x, tensor_y, task_labels=tensor_t
             )
-        )
-
+        ]
         tensor_x = torch.rand(200, 3, 28, 28)
         tensor_y = torch.randint(0, 100, (200,))
         tensor_t = torch.randint(0, 5, (200,))
@@ -539,33 +515,26 @@ class GenericCLScenarioTests(unittest.TestCase):
             )
         )
 
-        test_exps = []
         test_x = torch.rand(200, 3, 28, 28)
         test_y = torch.randint(100, 200, (200,))
         test_t = torch.randint(0, 5, (200,))
-        test_exps.append(
-            make_tensor_classification_dataset(
-                test_x, test_y, task_labels=test_t
-            )
-        )
-
-        other_stream_exps = []
+        test_exps = [
+            make_tensor_classification_dataset(test_x, test_y, task_labels=test_t)
+        ]
         other_x = torch.rand(200, 3, 28, 28)
         other_y = torch.randint(400, 600, (200,))
         other_t = torch.randint(0, 5, (200,))
-        other_stream_exps.append(
+        other_stream_exps = [
             make_tensor_classification_dataset(
                 other_x, other_y, task_labels=other_t
             )
-        )
-
+        ]
         return train_exps, test_exps, other_stream_exps
 
     @staticmethod
     def _generate_stream(dataset_list):
         # Lazy generator of a stream
-        for dataset in dataset_list:
-            yield dataset
+        yield from dataset_list
 
 
 if __name__ == "__main__":

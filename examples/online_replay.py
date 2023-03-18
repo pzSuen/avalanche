@@ -118,7 +118,7 @@ def main(args):
     # Create online benchmark
     batch_streams = benchmark.streams.values()
     # ocl_benchmark = OnlineCLScenario(batch_streams)
-    for i, exp in enumerate(benchmark.train_stream):
+    for exp in benchmark.train_stream:
         # Create online scenario from experience exp
         ocl_benchmark = OnlineCLScenario(
             original_streams=batch_streams, experiences=exp, experience_size=10

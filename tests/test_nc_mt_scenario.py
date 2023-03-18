@@ -345,26 +345,16 @@ class MultiTaskTests(unittest.TestCase):
         self.assertEqual(7, len(all_classes_test))
 
         self.assertTrue(
-            (
-                my_nc_benchmark.classes_in_experience["train"][0] == {0, 1, 2}
-                and my_nc_benchmark.classes_in_experience["train"][1]
-                == set(range(0, 7))
-            )
-            or (
-                my_nc_benchmark.classes_in_experience["train"][0]
-                == set(range(0, 7))
-                and my_nc_benchmark.classes_in_experience["train"][1]
-                == {0, 1, 2}
-            )
+            my_nc_benchmark.classes_in_experience["train"][0] == {0, 1, 2}
+            and my_nc_benchmark.classes_in_experience["train"][1] == set(range(7))
+            or my_nc_benchmark.classes_in_experience["train"][0] == set(range(7))
+            and my_nc_benchmark.classes_in_experience["train"][1] == {0, 1, 2}
         )
 
         exp_classes_ref1 = [list(range(3)), list(range(7))]
         exp_classes_ref2 = [list(range(7)), list(range(3))]
 
-        self.assertTrue(
-            exp_classes_train == exp_classes_ref1
-            or exp_classes_train == exp_classes_ref2
-        )
+        self.assertTrue(exp_classes_train in [exp_classes_ref1, exp_classes_ref2])
 
         if exp_classes_train == exp_classes_ref1:
             self.assertTrue(exp_classes_test == exp_classes_ref1)

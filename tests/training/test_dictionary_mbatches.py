@@ -73,7 +73,7 @@ class TestDictionaryDatasets(unittest.TestCase):
         data = [{"x": x, "y": y} for x, y in zip(rand_x, rand_y)]
 
         train_exps, test_exps = [], []
-        for i in range(0, 2):
+        for i in range(2):
             tl = ConstantSequence(i, len(data))
             tl = DataAttribute(tl, "targets_task_labels", use_in_getitem=True)
             av_data = AvalancheDataset(

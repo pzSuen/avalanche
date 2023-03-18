@@ -79,7 +79,7 @@ def main(args):
         5,
         task_labels=False,
         seed=1234,
-        fixed_class_order=[i for i in range(10)],
+        fixed_class_order=list(range(10)),
     )
 
     # choose some metrics and evaluation method

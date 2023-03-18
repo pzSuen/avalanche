@@ -108,12 +108,11 @@ def create_multi_dataset_generic_scenario(
                 "Test must contain 1 element when"
                 "complete_test_set_only is True"
             )
-    else:
-        if len(test_dataset_list) != len(train_dataset_list):
-            raise ValueError(
-                "Train and test lists must define the same "
-                " amount of experiences"
-            )
+    elif len(test_dataset_list) != len(train_dataset_list):
+        raise ValueError(
+            "Train and test lists must define the same "
+            " amount of experiences"
+        )
 
     train_t_labels = []
     train_dataset_list = list(train_dataset_list)
@@ -545,12 +544,11 @@ def create_generic_scenario_from_tensors(
     if isinstance(test_data_x, Tensor):
         test_data_x = [test_data_x]
         test_data_y = [test_data_y]
-    else:
-        if len(test_data_x) != len(test_data_y):
-            raise ValueError(
-                "test_data_x and test_data_y must contain"
-                " the same amount of elements"
-            )
+    elif len(test_data_x) != len(test_data_y):
+        raise ValueError(
+            "test_data_x and test_data_y must contain"
+            " the same amount of elements"
+        )
 
     exp_train_first_structure = []
     exp_test_first_structure = []

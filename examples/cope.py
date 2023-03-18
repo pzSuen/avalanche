@@ -72,7 +72,7 @@ def main(args):
     task_benchmark = SplitMNIST(
         nb_tasks,
         return_task_id=return_task_id,
-        fixed_class_order=[i for i in range(n_classes)],
+        fixed_class_order=list(range(n_classes)),
     )
 
     # Make data incremental (one batch = one experience)
@@ -118,11 +118,10 @@ def main(args):
 
     # TRAINING LOOP
     print("Starting experiment...")
-    results = []
     cl_strategy.train(benchmark.train_stream)
 
     print("Computing accuracy on the whole test set")
-    results.append(cl_strategy.eval(benchmark.test_stream))
+    results = [cl_strategy.eval(benchmark.test_stream)]
 
 
 if __name__ == "__main__":

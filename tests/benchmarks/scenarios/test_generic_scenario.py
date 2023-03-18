@@ -59,8 +59,7 @@ class StreamTests(unittest.TestCase):
     def test_lazy_stream(self):
         # lazy streams should be iterable
         def ls():
-            for el in [CLExperience(), CLExperience(), CLExperience()]:
-                yield el
+            yield from [CLExperience(), CLExperience(), CLExperience()]
 
         s = CLStream("a", ls())
         for i, el in enumerate(s):

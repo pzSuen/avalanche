@@ -165,17 +165,14 @@ class BaseTemplate:
 
         TODO: we probably need a better way to do this.
         """
-        # save each layer's training mode, to restore it later
-        _prev_model_training_modes = {}
-        for name, layer in self.model.named_modules():
-            _prev_model_training_modes[name] = layer.training
-
-        _prev_state = {
+        _prev_model_training_modes = {
+            name: layer.training for name, layer in self.model.named_modules()
+        }
+        return {
             "experience": self.experience,
             "is_training": self.is_training,
             "model_training_mode": _prev_model_training_modes,
         }
-        return _prev_state
 
     def _load_train_state(self, prev_state):
         # restore train-state variables and training mode.

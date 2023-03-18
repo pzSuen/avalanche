@@ -324,8 +324,7 @@ class StreamConfusionMatrix(PluginMetric[Tensor]):
         )
 
     def result(self) -> Tensor:
-        exp_cm = self._matrix.result()
-        return exp_cm
+        return self._matrix.result()
 
     def update(self, true_y: Tensor, predicted_y: Tensor) -> None:
         self._matrix.update(true_y, predicted_y)
@@ -344,9 +343,7 @@ class StreamConfusionMatrix(PluginMetric[Tensor]):
         exp_cm = self.result()
         phase_name, _ = phase_and_task(strategy)
         stream = stream_type(strategy.experience)
-        metric_name = "{}/{}_phase/{}_stream".format(
-            str(self), phase_name, stream
-        )
+        metric_name = f"{str(self)}/{phase_name}_phase/{stream}_stream"
         plot_x_position = strategy.clock.train_iterations
 
         if self._save_image:
@@ -433,9 +430,7 @@ class WandBStreamConfusionMatrix(PluginMetric):
         outputs, targets = self.result()
         phase_name, _ = phase_and_task(strategy)
         stream = stream_type(strategy.experience)
-        metric_name = "{}/{}_phase/{}_stream".format(
-            str(self), phase_name, stream
-        )
+        metric_name = f"{str(self)}/{phase_name}_phase/{stream}_stream"
         plot_x_position = strategy.clock.train_iterations
 
         # compute predicted classes

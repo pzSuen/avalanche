@@ -84,16 +84,7 @@ class StrategyTest(unittest.TestCase):
         return get_fast_benchmark(use_task_labels=use_task_labels)
 
     def get_model(self, fast_test=False):
-        if fast_test:
-            model = SimpleMLP(input_size=6, hidden_size=10)
-            # model.classifier = IncrementalClassifier(
-            #     model.classifier.in_features)
-            return model
-        else:
-            model = SimpleMLP()
-            # model.classifier = IncrementalClassifier(
-            #     model.classifier.in_features)
-            return model
+        return SimpleMLP(input_size=6, hidden_size=10) if fast_test else SimpleMLP()
 
     def run_strategy_boundaries(self, benchmark, cl_strategy):
         print("Starting experiment (with boundaries) ...")
@@ -111,15 +102,13 @@ class StrategyTest(unittest.TestCase):
     def run_strategy_no_boundaries(self, benchmark, cl_strategy):
         print("Starting experiment (without boundaries) ...")
         cl_strategy.evaluator.loggers = [TextLogger(sys.stdout)]
-        results = []
-
         cl_strategy.train(benchmark.train_stream, num_workers=0)
         print("Training completed")
 
         assert cl_strategy.clock.train_exp_counter > 0
 
         print("Computing accuracy on the current test set")
-        results.append(cl_strategy.eval(benchmark.original_test_stream[:]))
+        results = [cl_strategy.eval(benchmark.original_test_stream[:])]
 
 
 if __name__ == "__main__":

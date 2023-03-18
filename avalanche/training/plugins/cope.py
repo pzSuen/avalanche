@@ -282,7 +282,7 @@ class PPPloss(object):
         include_repellor = len(y_unique.size()) <= 1  # When at least 2 classes
 
         # All prototypes
-        p_y = torch.tensor([c for c in self.p_mem.keys()]).to(x.device).detach()
+        p_y = torch.tensor(list(self.p_mem.keys())).to(x.device).detach()
         p_x = (
             torch.cat([self.p_mem[c.item()] for c in p_y]).to(x.device).detach()
         )

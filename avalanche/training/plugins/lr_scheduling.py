@@ -120,10 +120,10 @@ class LRSchedulerPlugin(SupervisedPlugin):
         self._just_validated = False
 
     def after_training_exp(self, strategy: "SupervisedTemplate", **kwargs):
-        param_groups = strategy.optimizer.param_groups
-        base_lrs = self.scheduler.base_lrs
-
         if self.reset_lr:
+            param_groups = strategy.optimizer.param_groups
+            base_lrs = self.scheduler.base_lrs
+
             for group, lr in zip(param_groups, base_lrs):
                 group["lr"] = lr
 
@@ -154,20 +154,7 @@ class LRSchedulerPlugin(SupervisedPlugin):
     def after_eval(self, strategy: "SupervisedTemplate", **kwargs):
         if self.metric == "val_loss" and self._was_training:
 
-            if not self._executed_train_iteration:
-                # The base strategy may run an evaluation pass on the
-                # validation set before running the training loop. In that
-                # case, we should just discard the result.
-                # print('Ignoring pre-training validation')
-                pass
-            elif self._just_validated:
-                # The base strategy may run an evaluation pass on the
-                # validation set after the training loop. In that
-                # case, we should discard the result only if the validation pass
-                # has been duplicated.
-                # print('Ignoring, as just validated')
-                pass
-            else:
+            if self._executed_train_iteration and not self._just_validated:
                 # print('Stepping after validation',
                 #       self.rolling_metric.result())
                 self._step_scheduler(strategy, **kwargs)
@@ -223,10 +210,7 @@ class LRSchedulerPlugin(SupervisedPlugin):
         if strategy.clock.train_exp_counter > 0 and self.first_exp_only:
             return False
 
-        if strategy.clock.train_exp_epochs > 0 and self.first_epoch_only:
-            return False
-
-        return True
+        return strategy.clock.train_exp_epochs <= 0 or not self.first_epoch_only
 
     def _step_scheduler(self, strategy: "SupervisedTemplate", **kwargs):
         if strategy.is_training:
@@ -238,10 +222,8 @@ class LRSchedulerPlugin(SupervisedPlugin):
 
             if self.metric == "train_loss" or self.metric != "val_loss":
                 self.rolling_metric.reset()
-        else:
-            # Validating
-            if self._check_first_epoch_or_experience(strategy):
-                self.scheduler.step(metrics=self.rolling_metric.result())
+        elif self._check_first_epoch_or_experience(strategy):
+            self.scheduler.step(metrics=self.rolling_metric.result())
 
 
 __all__ = ["LRSchedulerPlugin"]

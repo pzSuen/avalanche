@@ -42,9 +42,7 @@ def split_detection_benchmark(
         eval=(eval_transform, None),
     )
 
-    exp_n_imgs = len(train_dataset) // n_experiences
-    remaining = len(train_dataset) % n_experiences
-
+    exp_n_imgs, remaining = divmod(len(train_dataset), n_experiences)
     # Note: in future versions of Avalanche, the make_classification_dataset
     # function will be replaced with a more specific function for object 
     # detection datasets.
@@ -69,7 +67,7 @@ def split_detection_benchmark(
         exp_sz[exp_id] += 1
         remaining -= 1
 
-    train_indices = [i for i in range(len(train_dataset_avl))]
+    train_indices = list(range(len(train_dataset_avl)))
     if shuffle:
         train_indices = torch.as_tensor(train_indices)[
             torch.randperm(len(train_indices))

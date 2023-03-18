@@ -40,7 +40,7 @@ class LvisEvaluator:
         self.iou_types = iou_types
         self.img_ids = []
         self.predictions = []
-        self.lvis_eval_per_iou = dict()
+        self.lvis_eval_per_iou = {}
 
     def update(self, predictions):
         img_ids = list(np.unique(list(predictions.keys())))
@@ -50,25 +50,24 @@ class LvisEvaluator:
         self.predictions.extend(results)
 
     def synchronize_between_processes(self):
-        if dist.is_initialized():
-            # Bypass NCCL (which forces CUDA-only sync)
-            if dist.get_backend() == "nccl":
-                group = dist.new_group(backend="gloo")
-            else:
-                group = dist.group.WORLD
-
-            my_rank = dist.get_rank()
-            output = [None for _ in range(dist.get_world_size())]
-            dist.gather_object(
-                self.predictions,
-                output if my_rank == 0 else None,
-                dst=0,
-                group=group,
-            )
-
-            return list(itertools.chain.from_iterable(output)), my_rank == 0
-        else:
+        if not dist.is_initialized():
             return self.predictions, True
+            # Bypass NCCL (which forces CUDA-only sync)
+        group = (
+            dist.new_group(backend="gloo")
+            if dist.get_backend() == "nccl"
+            else dist.group.WORLD
+        )
+        my_rank = dist.get_rank()
+        output = [None for _ in range(dist.get_world_size())]
+        dist.gather_object(
+            self.predictions,
+            output if my_rank == 0 else None,
+            dst=0,
+            group=group,
+        )
+
+        return list(itertools.chain.from_iterable(output)), my_rank == 0
 
     def evaluate(self, max_dets_per_image=None):
         all_preds, main_process = self.synchronize_between_processes()
@@ -104,16 +103,14 @@ class LvisEvaluator:
         if dist.is_initialized():
             dist.barrier()
 
-        result_dict = None
-        if self.lvis_eval_per_iou is not None:
-            result_dict = dict()
-            for iou, eval_data in self.lvis_eval_per_iou.items():
-                result_dict[iou] = dict()
-                for key in eval_data.results:
-                    value = eval_data.results[key]
-                    result_dict[iou][key] = value
-
-        return result_dict
+        return (
+            {
+                iou: {key: eval_data.results[key] for key in eval_data.results}
+                for iou, eval_data in self.lvis_eval_per_iou.items()
+            }
+            if self.lvis_eval_per_iou is not None
+            else None
+        )
 
     def summarize(self):
         if self.lvis_eval_per_iou is not None:
@@ -180,19 +177,18 @@ class LvisEvaluator:
     def _make_lvis_subset(lvis_gt, img_ids):
         img_ids = set(img_ids)
 
-        subset = dict()
-        subset["categories"] = list(lvis_gt.dataset["categories"])
-
-        subset_imgs = []
-        for img in lvis_gt.dataset["images"]:
-            if img["id"] in img_ids:
-                subset_imgs.append(img)
-        subset["images"] = subset_imgs
-
-        subset_anns = []
-        for ann in lvis_gt.dataset["annotations"]:
-            if ann["image_id"] in img_ids:
-                subset_anns.append(ann)
+        subset_imgs = [
+            img for img in lvis_gt.dataset["images"] if img["id"] in img_ids
+        ]
+        subset = {
+            "categories": list(lvis_gt.dataset["categories"]),
+            "images": subset_imgs,
+        }
+        subset_anns = [
+            ann
+            for ann in lvis_gt.dataset["annotations"]
+            if ann["image_id"] in img_ids
+        ]
         subset["annotations"] = subset_anns
 
         return DictLVIS(subset)
@@ -214,7 +210,7 @@ class DictLVIS(LVIS):
 
         assert (
             type(self.dataset) == dict
-        ), "Annotation file format {} not supported.".format(type(self.dataset))
+        ), f"Annotation file format {type(self.dataset)} not supported."
         self._create_index()
 
 

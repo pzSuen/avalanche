@@ -85,7 +85,7 @@ class ConversionMethodTests(unittest.TestCase):
         self.assertTrue(torch.equal(out_single_task, out_multi_task))
 
     def _test_modules(self, module, clf_name):
-        old_param_total = sum([torch.numel(p) for p in module.parameters()])
+        old_param_total = sum(torch.numel(p) for p in module.parameters())
 
         module = as_multitask(module, clf_name)
         module = module.to(self.device)
@@ -111,7 +111,7 @@ class ConversionMethodTests(unittest.TestCase):
         module.non_module_attribute += 5
 
         # Extract params and state dict
-        new_param_total = sum([torch.numel(p) for p in module.parameters()])
+        new_param_total = sum(torch.numel(p) for p in module.parameters())
         self.assertEqual(new_param_total, old_param_total)
         state = module.state_dict()
 

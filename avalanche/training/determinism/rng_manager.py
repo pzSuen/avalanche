@@ -12,11 +12,10 @@ from avalanche.training.determinism.cuda_rng import cuda_rng_seed, \
 class _Singleton(type):
     _instances = {}
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(
-                *args, **kwargs)
-        return cls._instances[cls]
+    def __call__(self, *args, **kwargs):
+        if self not in self._instances:
+            self._instances[self] = super(_Singleton, self).__call__(*args, **kwargs)
+        return self._instances[self]
 
 
 class _RNGManager:
@@ -127,10 +126,9 @@ class _RNGManager:
         self.set_random_seeds(seed)
 
     def __getstate__(self):
-        all_rngs_state = dict()
+        all_rngs_state = {}
         for rng_name, rng_def in self.random_generators.items():
-            rng_state = dict()
-            rng_state['current_state'] = rng_def['save_state']()
+            rng_state = {'current_state': rng_def['save_state']()}
             all_rngs_state[rng_name] = rng_state
         return all_rngs_state
 

@@ -152,7 +152,7 @@ def nc_scenario(
             "same time"
         )
 
-    if isinstance(train_dataset, list) or isinstance(train_dataset, tuple):
+    if isinstance(train_dataset, (list, tuple)):
         # Multi-dataset setting
 
         if len(train_dataset) != len(test_dataset):
@@ -290,7 +290,7 @@ def ni_scenario(
     )
 
     seq_train_dataset, seq_test_dataset = train_dataset, test_dataset
-    if isinstance(train_dataset, list) or isinstance(train_dataset, tuple):
+    if isinstance(train_dataset, (list, tuple)):
         if len(train_dataset) != len(test_dataset):
             raise ValueError(
                 "Train/test dataset lists must contain the "
@@ -732,12 +732,11 @@ def tensor_scenario(
     if isinstance(test_data_x, Tensor):
         test_data_x = [test_data_x]
         test_data_y = [test_data_y]
-    else:
-        if len(test_data_x) != len(test_data_y):
-            raise ValueError(
-                "test_data_x and test_data_y must contain"
-                " the same amount of elements"
-            )
+    elif len(test_data_x) != len(test_data_y):
+        raise ValueError(
+            "test_data_x and test_data_y must contain"
+            " the same amount of elements"
+        )
 
     if len(train_data_x) != len(train_data_y):
         raise ValueError(

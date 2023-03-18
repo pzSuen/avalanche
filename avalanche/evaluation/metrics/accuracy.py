@@ -215,10 +215,7 @@ class AccuracyPluginMetric(GenericPluginMetric[float]):
         :param split_by_task: whether to compute task-aware accuracy or not.
         """
         self.split_by_task = split_by_task
-        if self.split_by_task:
-            self._accuracy = TaskAwareAccuracy()
-        else:
-            self._accuracy = Accuracy()
+        self._accuracy = TaskAwareAccuracy() if self.split_by_task else Accuracy()
         super(AccuracyPluginMetric, self).__init__(
             self._accuracy, reset_at=reset_at, emit_at=emit_at, mode=mode
         )

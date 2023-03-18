@@ -52,26 +52,23 @@ def load_benchmark(use_task_labels=False, fast_test=True):
     2 classes per experience.
     """
     if fast_test:
-        my_nc_benchmark = get_fast_benchmark(use_task_labels)
-    else:
-        mnist_train = MNIST(
-            root=expanduser("~") + "/.avalanche/data/mnist/",
-            train=True,
-            download=True,
-            transform=Compose([ToTensor()]),
-        )
+        return get_fast_benchmark(use_task_labels)
+    mnist_train = MNIST(
+        root=expanduser("~") + "/.avalanche/data/mnist/",
+        train=True,
+        download=True,
+        transform=Compose([ToTensor()]),
+    )
 
-        mnist_test = MNIST(
-            root=expanduser("~") + "/.avalanche/data/mnist/",
-            train=False,
-            download=True,
-            transform=Compose([ToTensor()]),
-        )
-        my_nc_benchmark = nc_benchmark(
-            mnist_train, mnist_test, 5, task_labels=use_task_labels, seed=1234
-        )
-
-    return my_nc_benchmark
+    mnist_test = MNIST(
+        root=expanduser("~") + "/.avalanche/data/mnist/",
+        train=False,
+        download=True,
+        transform=Compose([ToTensor()]),
+    )
+    return nc_benchmark(
+        mnist_train, mnist_test, 5, task_labels=use_task_labels, seed=1234
+    )
 
 
 def load_image_data():
@@ -135,15 +132,14 @@ def get_fast_benchmark(
 
     train_dataset = TensorDataset(train_X, train_y)
     test_dataset = TensorDataset(test_X, test_y)
-    my_nc_benchmark = nc_benchmark(
+    return nc_benchmark(
         train_dataset,
         test_dataset,
         5,
         task_labels=use_task_labels,
         shuffle=shuffle,
-        seed=seed
+        seed=seed,
     )
-    return my_nc_benchmark
 
 
 class DummyImageDataset(Dataset):
@@ -188,11 +184,7 @@ def get_device():
     else:
         use_gpu = False
     print("Test on GPU:", use_gpu)
-    if use_gpu:
-        device = "cuda"
-    else:
-        device = "cpu"
-    return device
+    return "cuda" if use_gpu else "cpu"
 
 
 def set_deterministic_run(seed=0):

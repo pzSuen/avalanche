@@ -281,20 +281,16 @@ class ClassBalancedBuffer(BalancedExemplarsBuffer):
                 cl_idxs[target] = []
             cl_idxs[target].append(idx)
 
-        # Make AvalancheSubset per class
-        cl_datasets = {}
-        for c, c_idxs in cl_idxs.items():
-            cl_datasets[c] = classification_subset(new_data, indices=c_idxs)
-
+        cl_datasets = {
+            c: classification_subset(new_data, indices=c_idxs)
+            for c, c_idxs in cl_idxs.items()
+        }
         # Update seen classes
         self.seen_classes.update(cl_datasets.keys())
 
         # associate lengths to classes
         lens = self.get_group_lengths(len(self.seen_classes))
-        class_to_len = {}
-        for class_id, ll in zip(self.seen_classes, lens):
-            class_to_len[class_id] = ll
-
+        class_to_len = dict(zip(self.seen_classes, lens))
         # update buffers with new data
         for class_id, new_data_c in cl_datasets.items():
             ll = class_to_len[class_id]
@@ -350,10 +346,7 @@ class ParametricBuffer(BalancedExemplarsBuffer):
 
         # associate lengths to classes
         lens = self.get_group_lengths(len(self.seen_groups))
-        group_to_len = {}
-        for group_id, ll in zip(self.seen_groups, lens):
-            group_to_len[group_id] = ll
-
+        group_to_len = dict(zip(self.seen_groups, lens))
         # update buffers with new data
         for group_id, new_data_g in new_groups.items():
             ll = group_to_len[group_id]
@@ -395,21 +388,17 @@ class ParametricBuffer(BalancedExemplarsBuffer):
                 class_idxs[target] = []
             class_idxs[target].append(idx)
 
-        # Make AvalancheSubset per class
-        new_groups = {}
-        for c, c_idxs in class_idxs.items():
-            new_groups[c] = classification_subset(data, indices=c_idxs)
-        return new_groups
+        return {
+            c: classification_subset(data, indices=c_idxs)
+            for c, c_idxs in class_idxs.items()
+        }
 
     def _split_by_experience(self, strategy, data):
         exp_id = strategy.clock.train_exp_counter + 1
         return {exp_id: data}
 
     def _split_by_task(self, data):
-        new_groups = {}
-        for task_id in data.task_set:
-            new_groups[task_id] = data.task_set[task_id]
-        return new_groups
+        return {task_id: data.task_set[task_id] for task_id in data.task_set}
 
 
 class _ParametricSingleBuffer(ExemplarsBuffer):

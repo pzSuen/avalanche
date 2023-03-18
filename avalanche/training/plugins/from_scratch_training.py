@@ -41,9 +41,11 @@ class FromScratchTrainingPlugin(BaseSGDPlugin):
         """Called after `train_exp` by the `BaseTemplate`."""
         # Copy the initial weights to the model
         for (n, p) in strategy.model.named_parameters():
-            if n in self.initial_weights.keys():
-                if p.data.shape == self.initial_weights[n].data.shape:
-                    p.data.copy_(self.initial_weights[n].data)
+            if (
+                n in self.initial_weights.keys()
+                and p.data.shape == self.initial_weights[n].data.shape
+            ):
+                p.data.copy_(self.initial_weights[n].data)
 
         # Update the initial weights (in case new parameters are added)
         self.initial_weights = deepcopy(strategy.model.state_dict())

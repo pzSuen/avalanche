@@ -70,22 +70,13 @@ class SubSequence(Sequence[TTargetType]):
         self.converter = converter
 
     def __len__(self):
-        if self._indices is None:
-            return len(self._targets)
-        return len(self._indices)
+        return len(self._targets) if self._indices is None else len(self._indices)
 
     def __getitem__(self, item_idx) -> TTargetType:
-        if self._indices is not None:
-            subset_idx = self._indices[item_idx]
-        else:
-            subset_idx = item_idx
-
+        subset_idx = self._indices[item_idx] if self._indices is not None else item_idx
         element = self._targets[subset_idx]
 
-        if self.converter is not None:
-            return self.converter(element)
-
-        return element
+        return self.converter(element) if self.converter is not None else element
 
     def __str__(self):
         return (
@@ -116,10 +107,7 @@ class LazyClassMapping(SubSequence[int]):
     def __getitem__(self, item_idx) -> int:
         target_value = super().__getitem__(item_idx)
 
-        if self._mapping is not None:
-            return self._mapping[target_value]
-
-        return target_value
+        return target_value if self._mapping is None else self._mapping[target_value]
 
 
 class LazyConcatTargets(Sequence[TTargetType]):
@@ -156,15 +144,12 @@ class LazyConcatTargets(Sequence[TTargetType]):
 
         target = self._targets_list[targets_idx][internal_idx]
 
-        if self.converter is None:
-            return target
-        return self.converter(target)
+        return target if self.converter is None else self.converter(target)
 
     def __iter__(self):
         if self.converter is None:
             for x in self._targets_list:
-                for y in x:
-                    yield y
+                yield from x
         else:
             for x in self._targets_list:
                 for y in x:
@@ -274,7 +259,7 @@ class SequenceDataset(IDatasetWithTargets[T_co, TTargetType]):
             means that the second sequence (usually containing the "y" values)
             will be used for the targets field.
         """
-        if len(sequences) < 1:
+        if not sequences:
             raise ValueError("At least one sequence must be passed")
 
         common_size = len(sequences[0])
@@ -315,7 +300,7 @@ def find_list_from_index(
 
     list_idx = bisect.bisect_right(cumulative_sizes, pattern_idx)
     if list_idx != 0:
-        pattern_idx = pattern_idx - cumulative_sizes[list_idx - 1]
+        pattern_idx -= cumulative_sizes[list_idx - 1]
 
     if pattern_idx >= list_sizes[list_idx]:
         raise ValueError("Index out of bounds, wrong max_size parameter")
@@ -359,10 +344,7 @@ def manage_advanced_indexing(
         single_element = single_element_getter(int(single_idx))
         elements.append(single_element)
 
-    if len(elements) == 1:
-        return elements[0]
-
-    return collate_fn(elements)
+    return elements[0] if len(elements) == 1 else collate_fn(elements)
 
 
 class LazySubsequence(Sequence[int]):
@@ -395,10 +377,7 @@ def optimize_sequence(sequence: Sequence[TTargetType]) -> Sequence[TTargetType]:
     if len(sequence) == 0 or isinstance(sequence, ConstantSequence):
         return sequence
 
-    if isinstance(sequence, list):
-        return sequence
-
-    return list(sequence)
+    return sequence if isinstance(sequence, list) else list(sequence)
 
 
 class TupleTLabel(tuple):

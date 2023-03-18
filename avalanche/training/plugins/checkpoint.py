@@ -181,12 +181,12 @@ class CheckpointPlugin(BaseSGDPlugin[BaseSGDTemplate]):
             experience).
         """
         existing_checkpoints = list(self.storage.list_checkpoints())
-        if len(existing_checkpoints) == 0:
+        if not existing_checkpoints:
             # No checkpoints exist
             return None, 0
 
         last_exp = max(
-            [int(checkpoint_name) for checkpoint_name in existing_checkpoints]
+            int(checkpoint_name) for checkpoint_name in existing_checkpoints
         )
 
         loaded_checkpoint = self.storage.load_checkpoint(
@@ -199,10 +199,11 @@ class CheckpointPlugin(BaseSGDPlugin[BaseSGDTemplate]):
             # Replace the previous CheckpointPlugin with "self" in strategy.
             # Useful if the save/load path (or even the storage object class)
             # has changed.
-            checkpoint_plugin_indices = set(
-                idx for idx, plugin in enumerate(strategy.plugins)
+            checkpoint_plugin_indices = {
+                idx
+                for idx, plugin in enumerate(strategy.plugins)
                 if isinstance(plugin, CheckpointPlugin)
-            )
+            }
 
             if len(checkpoint_plugin_indices) > 1:
                 raise RuntimeError(
@@ -272,9 +273,8 @@ class CheckpointPlugin(BaseSGDPlugin[BaseSGDTemplate]):
             return device_or_map
 
         device = torch.device(device_or_map)
-        map_location = dict()
+        map_location = {'cpu': 'cpu'}
 
-        map_location['cpu'] = 'cpu'
         for cuda_idx in range(100):
             map_location[f'cuda:{cuda_idx}'] = str(device)
         return map_location
@@ -320,14 +320,15 @@ class FileSystemCheckpointStorage(CheckpointStorage):
             raise
 
     def list_checkpoints(self) -> List[str]:
-        if not self.directory.exists():
-            return []
-
-        return [
-            x.name
-            for x in self.directory.iterdir()
-            if self.checkpoint_exists(x.name)
-        ]
+        return (
+            [
+                x.name
+                for x in self.directory.iterdir()
+                if self.checkpoint_exists(x.name)
+            ]
+            if self.directory.exists()
+            else []
+        )
 
     def checkpoint_exists(self, checkpoint_name: str) -> bool:
         return (self.directory / checkpoint_name / 'checkpoint.pth').exists()

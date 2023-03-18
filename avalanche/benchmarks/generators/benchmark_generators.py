@@ -168,7 +168,7 @@ def nc_benchmark(
             "same time"
         )
 
-    if isinstance(train_dataset, list) or isinstance(train_dataset, tuple):
+    if isinstance(train_dataset, (list, tuple)):
         # Multi-dataset setting
 
         if len(train_dataset) != len(test_dataset):
@@ -324,7 +324,7 @@ def ni_benchmark(
     """
 
     seq_train_dataset, seq_test_dataset = train_dataset, test_dataset
-    if isinstance(train_dataset, list) or isinstance(train_dataset, tuple):
+    if isinstance(train_dataset, (list, tuple)):
         if len(train_dataset) != len(test_dataset):
             raise ValueError(
                 "Train/test dataset lists must contain the "
@@ -563,9 +563,7 @@ def data_incremental_benchmark(
         for exp in stream:
             experiences = split_strategy(exp)
             split_datasets += experiences
-            for _ in range(len(experiences)):
-                split_task_labels.append(set(exp.task_labels))
-
+            split_task_labels.extend(set(exp.task_labels) for _ in range(len(experiences)))
         stream_def = StreamUserDef(
             split_datasets,
             split_task_labels,

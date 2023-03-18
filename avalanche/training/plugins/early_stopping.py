@@ -107,7 +107,7 @@ class EarlyStoppingPlugin(SupervisedPlugin):
     def _update_best(self, strategy):
         res = strategy.evaluator.get_last_metrics()
         names = [k for k in res.keys() if k.startswith(self.metric_key)]
-        if len(names) == 0:
+        if not names:
             return None
 
         full_name = names[-1]

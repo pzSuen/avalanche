@@ -122,16 +122,15 @@ def create_multi_dataset_generic_benchmark(
     input_streams = dict(train=train_datasets, test=test_datasets)
 
     if other_streams_datasets is not None:
-        input_streams = {**input_streams, **other_streams_datasets}
+        input_streams |= other_streams_datasets
 
-    if complete_test_set_only:
-        if len(input_streams["test"]) != 1:
-            raise ValueError(
-                "Test stream must contain one experience when"
-                "complete_test_set_only is True"
-            )
+    if complete_test_set_only and len(input_streams["test"]) != 1:
+        raise ValueError(
+            "Test stream must contain one experience when"
+            "complete_test_set_only is True"
+        )
 
-    stream_definitions = dict()
+    stream_definitions = {}
 
     for stream_name, dataset_list in input_streams.items():
         initial_transform_group = "train"
@@ -167,12 +166,11 @@ def _adapt_lazy_stream(generator, transform_groups, initial_transform_group):
     """
 
     for dataset in generator:
-        dataset = make_classification_dataset(
+        yield make_classification_dataset(
             dataset,
             transform_groups=transform_groups,
             initial_transform_group=initial_transform_group,
         )
-        yield dataset
 
 
 class LazyStreamDefinition(NamedTuple):
@@ -310,16 +308,15 @@ def create_lazy_generic_benchmark(
     input_streams = dict(train=train_generator, test=test_generator)
 
     if other_streams_generators is not None:
-        input_streams = {**input_streams, **other_streams_generators}
+        input_streams |= other_streams_generators
 
-    if complete_test_set_only:
-        if input_streams["test"][1] != 1:
-            raise ValueError(
-                "Test stream must contain one experience when"
-                "complete_test_set_only is True"
-            )
+    if complete_test_set_only and input_streams["test"][1] != 1:
+        raise ValueError(
+            "Test stream must contain one experience when"
+            "complete_test_set_only is True"
+        )
 
-    stream_definitions = dict()
+    stream_definitions = {}
 
     for stream_name, (
         generator,
@@ -440,9 +437,9 @@ def create_generic_benchmark_from_filelists(
     input_streams = dict(train=train_file_lists, test=test_file_lists)
 
     if other_streams_file_lists is not None:
-        input_streams = {**input_streams, **other_streams_file_lists}
+        input_streams |= other_streams_file_lists
 
-    stream_definitions = dict()
+    stream_definitions = {}
 
     for stream_name, file_lists in input_streams.items():
         stream_datasets = []
@@ -569,9 +566,9 @@ def create_generic_benchmark_from_paths(
     input_streams = dict(train=train_lists_of_files, test=test_lists_of_files)
 
     if other_streams_lists_of_files is not None:
-        input_streams = {**input_streams, **other_streams_lists_of_files}
+        input_streams |= other_streams_lists_of_files
 
-    stream_definitions = dict()
+    stream_definitions = {}
 
     for stream_name, lists_of_files in input_streams.items():
         stream_datasets = []
@@ -690,19 +687,17 @@ def create_generic_benchmark_from_tensor_lists(
     input_streams = dict(train=train_tensors, test=test_tensors)
 
     if other_streams_tensors is not None:
-        input_streams = {**input_streams, **other_streams_tensors}
+        input_streams |= other_streams_tensors
 
-    stream_definitions = dict()
+    stream_definitions = {}
 
     for stream_name, list_of_exps_tensors in input_streams.items():
-        stream_datasets = []
-        for exp_id, exp_tensors in enumerate(list_of_exps_tensors):
-            stream_datasets.append(
-                make_tensor_classification_dataset(
-                    *exp_tensors, task_labels=task_labels[exp_id]
-                )
+        stream_datasets = [
+            make_tensor_classification_dataset(
+                *exp_tensors, task_labels=task_labels[exp_id]
             )
-
+            for exp_id, exp_tensors in enumerate(list_of_exps_tensors)
+        ]
         stream_definitions[stream_name] = stream_datasets
 
     return create_multi_dataset_generic_benchmark(

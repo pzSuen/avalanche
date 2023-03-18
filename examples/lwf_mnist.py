@@ -46,9 +46,7 @@ def main(args):
     )
 
     # create strategy
-    assert (
-        len(args.lwf_alpha) == 1 or len(args.lwf_alpha) == 5
-    ), "Alpha must be a non-empty list."
+    assert len(args.lwf_alpha) in {1, 5}, "Alpha must be a non-empty list."
     lwf_alpha = (
         args.lwf_alpha[0] if len(args.lwf_alpha) == 1 else args.lwf_alpha
     )

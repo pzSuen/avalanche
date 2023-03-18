@@ -173,10 +173,7 @@ def merge(img_ids, eval_imgs):
     for p in all_img_ids:
         merged_img_ids.extend(p)
 
-    merged_eval_imgs = []
-    for p in all_eval_imgs:
-        merged_eval_imgs.append(p)
-
+    merged_eval_imgs = list(all_eval_imgs)
     merged_img_ids = np.array(merged_img_ids)
     merged_eval_imgs = np.concatenate(merged_eval_imgs, 2)
 

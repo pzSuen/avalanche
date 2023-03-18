@@ -188,16 +188,13 @@ class TextLogger(BaseLogger, SupervisedPlugin):
         stream = stream_type(strategy.experience)
         if task_id is None:
             print(
-                "-- Starting {} on experience {} from {} stream --".format(
-                    action_name, exp_id, stream
-                ),
+                f"-- Starting {action_name} on experience {exp_id} from {stream} stream --",
                 file=self.file,
                 flush=True,
             )
         else:
             print(
-                "-- Starting {} on experience {} (Task {}) from {}"
-                " stream --".format(action_name, exp_id, task_id, stream),
+                f"-- Starting {action_name} on experience {exp_id} (Task {task_id}) from {stream} stream --",
                 file=self.file,
                 flush=True,
             )
@@ -234,10 +231,10 @@ class TextLogger(BaseLogger, SupervisedPlugin):
         now_w_timezone = utc_dt.astimezone()  # local time
         print(
             f'[{self.__class__.__name__}] Resuming from checkpoint.',
-            f'Current time is',
+            'Current time is',
             now_w_timezone.strftime("%Y-%m-%d %H:%M:%S %z"),
             file=self.file,
-            flush=True
+            flush=True,
         )
 
     @staticmethod
@@ -245,7 +242,7 @@ class TextLogger(BaseLogger, SupervisedPlugin):
         is_notebook = False
         try:
             is_notebook = file_object.__class__.__name__ == 'OutStream' and\
-                'ipykernel' in file_object.__class__.__module__
+                    'ipykernel' in file_object.__class__.__module__
         except Exception:
             pass
 
@@ -257,11 +254,11 @@ class TextLogger(BaseLogger, SupervisedPlugin):
             # Standard file object
             out_file_path = TextLogger._file_get_real_path(file_object)
             stream_name = TextLogger._file_get_stream(file_object)
-        
+
         if out_file_path is not None:
-            return 'path:' + str(out_file_path)
+            return f'path:{str(out_file_path)}'
         elif stream_name is not None:
-            return 'stream:' + stream_name
+            return f'stream:{stream_name}'
         else:
             return None
 
@@ -290,26 +287,19 @@ class TextLogger(BaseLogger, SupervisedPlugin):
                 # Manage files created by tempfile
                 file_object = file_object.file
             fobject_path = file_object.name
-            if fobject_path in ['<stdout>', '<stderr>']:
-                return None
-            return fobject_path
+            return None if fobject_path in ['<stdout>', '<stderr>'] else fobject_path
         except AttributeError:
             return None
 
     @staticmethod
     def _file_get_stream(file_object) -> Optional[str]:
-        if file_object == sys.stdout or file_object == sys.__stdout__:
+        if file_object in [sys.stdout, sys.__stdout__]:
             return 'stdout'
-        if file_object == sys.stderr or file_object == sys.__stderr__:
-            return 'stderr'
-
-        return None
+        return 'stderr' if file_object in [sys.stderr, sys.__stderr__] else None
 
 
 def _remove_prefix(text, prefix):
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text  # or whatever
+    return text[len(prefix):] if text.startswith(prefix) else text
 
 
 __all__ = [

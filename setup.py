@@ -18,8 +18,7 @@ def get_version(rel_path):
         if line.startswith('__version__'):
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
-    else:
-        raise RuntimeError("Unable to find version string.")
+    raise RuntimeError("Unable to find version string.")
 
 
 def get_extra_requires(path, add_all=True):
@@ -39,7 +38,7 @@ def get_extra_requires(path, add_all=True):
 
         # add tag `all` at the end
         if add_all:
-            extra_deps['all'] = set(vv for v in extra_deps.values() for vv in v)
+            extra_deps['all'] = {vv for v in extra_deps.values() for vv in v}
 
     return extra_deps
 

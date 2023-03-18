@@ -198,7 +198,7 @@ class MeanScoresPluginMetricABC(PluginMetric, ABC):
         rv = [
             MetricValue(
                 self,
-                name=base_metric_name + f"/{label_cat}_classes",
+                name=f"{base_metric_name}/{label_cat}_classes",
                 value=m,
                 x_plot=num_it,
             )
@@ -208,7 +208,7 @@ class MeanScoresPluginMetricABC(PluginMetric, ABC):
             rv.append(
                 MetricValue(
                     self,
-                    name=base_metric_name + f"/new_old_diff",
+                    name=f"{base_metric_name}/new_old_diff",
                     value=label_cat2mean_score["new"]
                     - label_cat2mean_score["old"],
                     x_plot=num_it,

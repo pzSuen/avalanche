@@ -189,13 +189,12 @@ class CSVLogger(BaseLogger, SupervisedPlugin):
                     self.val_acc = val.value
                 elif val.name.startswith("Loss_Exp"):
                     self.val_loss = val.value
-            else:
-                if val.name.startswith("Top1_Acc_Exp"):
-                    acc = val.value
-                elif val.name.startswith("Loss_Exp"):
-                    loss = val.value
-                elif val.name.startswith("ExperienceForgetting"):
-                    forgetting = val.value
+            elif val.name.startswith("Top1_Acc_Exp"):
+                acc = val.value
+            elif val.name.startswith("Loss_Exp"):
+                loss = val.value
+            elif val.name.startswith("ExperienceForgetting"):
+                forgetting = val.value
 
         if not self.in_train_phase:
             self.print_eval_metrics(

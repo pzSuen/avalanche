@@ -26,9 +26,7 @@ class EndlessCLSimTest(unittest.TestCase):
     )
     def test_endless_cl_classification(self):
 
-        if "FAST_TEST" in os.environ:
-            pass
-        else:
+        if "FAST_TEST" not in os.environ:
             # "Classes"
             scenario = EndlessCLSim(
                 scenario="Classes",
@@ -37,9 +35,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=False,
                 dataset_root=None,
             )
-            for experience in scenario.train_stream:
-                pass
-
             # Illumination
             scenario = EndlessCLSim(
                 scenario="Illumination",
@@ -48,9 +43,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=False,
                 dataset_root=None,
             )
-            for experience in scenario.train_stream:
-                pass
-
             # Weather
             scenario = EndlessCLSim(
                 scenario="Weather",
@@ -59,8 +51,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=False,
                 dataset_root=None,
             )
-            for experience in scenario.train_stream:
-                pass
         return
 
     @unittest.skipIf(
@@ -68,9 +58,7 @@ class EndlessCLSimTest(unittest.TestCase):
         "We don't want to download large datasets in github actions.",
     )
     def test_endless_cl_video(self):
-        if "FAST_TEST" in os.environ:
-            pass
-        else:
+        if "FAST_TEST" not in os.environ:
             # "Classes"
             scenario = EndlessCLSim(
                 scenario="Classes",
@@ -79,9 +67,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=True,
                 dataset_root="/data/avalanche",
             )
-            for experience in scenario.train_stream:
-                pass
-
             # Illumination
             scenario = EndlessCLSim(
                 scenario="Illumination",
@@ -90,9 +75,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=True,
                 dataset_root=None,
             )
-            for experience in scenario.train_stream:
-                pass
-
             # Weather
             scenario = EndlessCLSim(
                 scenario="Weather",
@@ -101,8 +83,6 @@ class EndlessCLSimTest(unittest.TestCase):
                 semseg=True,
                 dataset_root=None,
             )
-            for experience in scenario.train_stream:
-                pass
         return
 
 

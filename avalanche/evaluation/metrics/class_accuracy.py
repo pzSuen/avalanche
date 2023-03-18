@@ -94,19 +94,18 @@ class ClassAccuracy(Metric[Dict[int, Dict[int, float]]]):
         A dictionary "task_id -> {class_id -> Mean}".
         """
 
-        if classes is not None:
-            if isinstance(classes, dict):
-                # Task-id -> classes dict
-                self.classes = {
-                    task_id: self._ensure_int_classes(class_list)
-                    for task_id, class_list in classes.items()
-                }
-            else:
-                # Assume is a plain iterable
-                self.classes = {0: self._ensure_int_classes(classes)}
-        else:
+        if classes is None:
             self.dynamic_classes = True
 
+        elif isinstance(classes, dict):
+            # Task-id -> classes dict
+            self.classes = {
+                task_id: self._ensure_int_classes(class_list)
+                for task_id, class_list in classes.items()
+            }
+        else:
+            # Assume is a plain iterable
+            self.classes = {0: self._ensure_int_classes(classes)}
         self.__init_accs_for_known_classes()
 
     @torch.no_grad()
@@ -206,7 +205,7 @@ class ClassAccuracy(Metric[Dict[int, Dict[int, float]]]):
 
     @staticmethod
     def _ensure_int_classes(classes_iterable: Iterable[int]):
-        return set(int(c) for c in classes_iterable)
+        return {int(c) for c in classes_iterable}
 
 
 class ClassAccuracyPluginMetric(_ExtendedGenericPluginMetric):
@@ -235,19 +234,18 @@ class ClassAccuracyPluginMetric(_ExtendedGenericPluginMetric):
         experience_id = strategy.experience.current_experience
 
         for task_id, task_classes in task_accuracies.items():
-            for class_id, class_accuracy in task_classes.items():
-                metric_values.append(
-                    _ExtendedPluginMetricValue(
-                        metric_name=str(self),
-                        metric_value=class_accuracy,
-                        phase_name=phase_name,
-                        stream_name=stream_name,
-                        task_label=task_id,
-                        experience_id=experience_id,
-                        class_id=class_id,
-                    )
+            metric_values.extend(
+                _ExtendedPluginMetricValue(
+                    metric_name=str(self),
+                    metric_value=class_accuracy,
+                    phase_name=phase_name,
+                    stream_name=stream_name,
+                    task_label=task_id,
+                    experience_id=experience_id,
+                    class_id=class_id,
                 )
-
+                for class_id, class_accuracy in task_classes.items()
+            )
         return metric_values
 
     def metric_value_name(self, m_value: _ExtendedPluginMetricValue) -> str:

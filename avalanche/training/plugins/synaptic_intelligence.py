@@ -67,18 +67,18 @@ class SynapticIntelligencePlugin(SupervisedPlugin):
         )
         self.eps: float = eps
         self.excluded_parameters: Set[str] = set(excluded_parameters)
-        self.ewc_data: EwcDataType = (dict(), dict())
+        self.ewc_data: EwcDataType = {}, {}
         """
         The first dictionary contains the params at loss minimum while the 
         second one contains the parameter importance.
         """
 
         self.syn_data: SynDataType = {
-            "old_theta": dict(),
-            "new_theta": dict(),
-            "grad": dict(),
-            "trajectory": dict(),
-            "cum_trajectory": dict(),
+            "old_theta": {},
+            "new_theta": {},
+            "grad": {},
+            "trajectory": {},
+            "cum_trajectory": {},
         }
 
         self._device = device
@@ -148,10 +148,7 @@ class SynapticIntelligencePlugin(SupervisedPlugin):
         )
 
     def device(self, strategy: "SupervisedTemplate"):
-        if self._device == "as_strategy":
-            return strategy.device
-
-        return self._device
+        return strategy.device if self._device == "as_strategy" else self._device
 
     @staticmethod
     @torch.no_grad()
@@ -345,7 +342,7 @@ class SynapticIntelligencePlugin(SupervisedPlugin):
         for x in excluded:
             result.add(x)
             if not x.endswith("*"):
-                result.add(x + ".*")
+                result.add(f"{x}.*")
         return result
 
     @staticmethod
@@ -367,12 +364,10 @@ class SynapticIntelligencePlugin(SupervisedPlugin):
                 excluded_parameters.add(lp.parameter_name)
 
         for name, param in model.named_parameters():
-            accepted = True
-            for exclusion_pattern in excluded_parameters:
-                if fnmatch(name, exclusion_pattern):
-                    accepted = False
-                    break
-
+            accepted = not any(
+                fnmatch(name, exclusion_pattern)
+                for exclusion_pattern in excluded_parameters
+            )
             if accepted:
                 result.append((name, param))
 
@@ -387,9 +382,4 @@ class SynapticIntelligencePlugin(SupervisedPlugin):
             model, excluded_parameters
         )
 
-        result = []
-        for name, param in allow_list:
-            if param.requires_grad:
-                result.append((name, param))
-
-        return result
+        return [(name, param) for name, param in allow_list if param.requires_grad]
