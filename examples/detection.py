@@ -154,7 +154,7 @@ def main(args):
 
     # TRAINING LOOP
     print("Starting experiment...")
-    for i, experience in enumerate(benchmark.train_stream):
+    for experience in benchmark.train_stream:
         print("Start of experience: ", experience.current_experience)
         print("Train dataset contains", len(experience.dataset), "instances")
 
@@ -223,11 +223,7 @@ def make_penn_fudan_metrics(detection_only=True):
     :return: The detection metrics for the Penn-Fudan dataset.
     """
 
-    if detection_only:
-        iou_types = ["bbox"]
-    else:
-        iou_types = ["bbox", "segm"]
-
+    iou_types = ["bbox"] if detection_only else ["bbox", "segm"]
     return DetectionMetrics(
         iou_types=iou_types, default_to_coco=True, summarize_to_stdout=True
     )

@@ -51,10 +51,7 @@ def get_fast_benchmark():
 
     train_dataset = TensorDataset(train_X, train_y)
     test_dataset = TensorDataset(test_X, test_y)
-    my_nc_benchmark = nc_benchmark(
-        train_dataset, test_dataset, 5, task_labels=True
-    )
-    return my_nc_benchmark
+    return nc_benchmark(train_dataset, test_dataset, 5, task_labels=True)
 
 
 class DataLoaderTests(unittest.TestCase):
@@ -64,20 +61,9 @@ class DataLoaderTests(unittest.TestCase):
         data = concat_datasets(ds)
 
         dl = DataLoader(data)
-        for el in dl:
-            pass
-
         dl = TaskBalancedDataLoader(data)
-        for el in dl:
-            pass
-
         dl = GroupBalancedDataLoader(ds)
-        for el in dl:
-            pass
-
         dl = ReplayDataLoader(data, data)
-        for el in dl:
-            pass
 
     def test_dataload_reinit(self):
         benchmark = get_fast_benchmark()

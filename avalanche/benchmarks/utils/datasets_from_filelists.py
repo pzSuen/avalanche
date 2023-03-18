@@ -50,7 +50,7 @@ def default_flist_reader(flist):
 
     imlist = []
     with open(flist, "r") as rf:
-        for line in rf.readlines():
+        for line in rf:
             impath, imlabel = line.strip().split()
             imlist.append((impath, int(imlabel)))
 
@@ -106,10 +106,7 @@ class PathsDataset(data.Dataset):
         img_description = self.imgs[index]
         impath = img_description[0]
         target = img_description[1]
-        bbox = None
-        if len(img_description) > 2:
-            bbox = img_description[2]
-
+        bbox = img_description[2] if len(img_description) > 2 else None
         if self.root is not None:
             impath = self.root / impath
         img = self.loader(impath)
@@ -228,25 +225,21 @@ def datasets_from_filelists(
     """
 
     if complete_test_set_only:
-        if not (
-            isinstance(test_filelists, str) or isinstance(test_filelists, Path)
-        ):
-            if len(test_filelists) > 1:
-                raise ValueError(
-                    "When complete_test_set_only is True, test_filelists must "
-                    "be a str, Path or a list with a single element describing "
-                    "the path to the complete test set."
-                )
-            else:
-                test_filelists = test_filelists[0]
-        else:
+        if isinstance(test_filelists, (str, Path)):
             test_filelists = [test_filelists]
-    else:
-        if len(test_filelists) != len(train_filelists):
+        elif len(test_filelists) > 1:
             raise ValueError(
-                "When complete_test_set_only is False, test_filelists and "
-                "train_filelists must contain the same number of elements."
+                "When complete_test_set_only is True, test_filelists must "
+                "be a str, Path or a list with a single element describing "
+                "the path to the complete test set."
             )
+        else:
+            test_filelists = test_filelists[0]
+    elif len(test_filelists) != len(train_filelists):
+        raise ValueError(
+            "When complete_test_set_only is False, test_filelists and "
+            "train_filelists must contain the same number of elements."
+        )
 
     transform_groups = dict(
         train=(train_transform, train_target_transform),
@@ -323,23 +316,21 @@ def datasets_from_paths(
     if complete_test_set_only:
         # Check if the single dataset was passed as [Tuple1, Tuple2, ...]
         # or as [[Tuple1, Tuple2, ...]]
-        if not isinstance(test_list[0], Tuple):
-            if len(test_list) > 1:
-                raise ValueError(
-                    "When complete_test_set_only is True, test_list must "
-                    "be a single list of tuples or a nested list containing "
-                    "a single lis of tuples"
-                )
-            else:
-                test_list = test_list[0]
-        else:
+        if isinstance(test_list[0], Tuple):
             test_list = [test_list]
-    else:
-        if len(test_list) != len(train_list):
+        elif len(test_list) > 1:
             raise ValueError(
-                "When complete_test_set_only is False, test_list and "
-                "train_list must contain the same number of elements."
+                "When complete_test_set_only is True, test_list must "
+                "be a single list of tuples or a nested list containing "
+                "a single lis of tuples"
             )
+        else:
+            test_list = test_list[0]
+    elif len(test_list) != len(train_list):
+        raise ValueError(
+            "When complete_test_set_only is False, test_list and "
+            "train_list must contain the same number of elements."
+        )
 
     transform_groups = dict(
         train=(train_transform, train_target_transform),
@@ -378,13 +369,13 @@ def datasets_from_paths(
         # All paths have a common filesystem root
         # Remove it from all paths!
         single_path_case = False
-        tr_list = list()
-        te_list = list()
+        tr_list = []
+        te_list = []
 
         for idx_exp_list in range(len(train_list)):
             if single_path_case:
                 break
-            st_list = list()
+            st_list = []
             for x in train_list[idx_exp_list]:
                 rel = os.path.relpath(x[0], common_root)
                 if len(rel) == 0 or rel == ".":
@@ -397,7 +388,7 @@ def datasets_from_paths(
         for idx_exp_list in range(len(test_list)):
             if single_path_case:
                 break
-            st_list = list()
+            st_list = []
             for x in test_list[idx_exp_list]:
                 rel = os.path.relpath(x[0], common_root)
                 if len(rel) == 0 or rel == ".":
@@ -458,7 +449,7 @@ def common_paths_root(exp_list):
         # All paths have a common filesystem root
         # Remove it from all paths!
         single_path_case = False
-        exp_tuples = list()
+        exp_tuples = []
 
         for x in exp_list:
             if single_path_case:

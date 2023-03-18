@@ -18,7 +18,7 @@ def _get_checkpoint_device_map():
 
 
 def _recreate_pytorch_device(*args):
-    device_map = globals().get('CHECKPOINT_DEVICE_MAP', None)
+    device_map = globals().get('CHECKPOINT_DEVICE_MAP')
     device_object = torch.device(*args)
     mapped_object = device_object
 
@@ -32,11 +32,7 @@ def _recreate_pytorch_device(*args):
 @dill.register(torch.device)
 def _save_pytorch_device(pickler, obj: torch.device):
     has_index = obj.index is not None
-    if has_index:
-        reduction = (obj.type, obj.index)
-    else:
-        reduction = (obj.type,)
-
+    reduction = (obj.type, obj.index) if has_index else (obj.type, )
     pickler.save_reduce(
         _recreate_pytorch_device,
         reduction, obj=obj)

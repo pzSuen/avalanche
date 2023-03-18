@@ -102,7 +102,7 @@ class Prompt(nn.Module):
             prompt_mask: mask to select specific prompts.
             cls_features: key features to find the close prompts
         """
-        out = dict()
+        out = {}
         if self.prompt_pool:
             if self.embedding_key == "mean":
                 x_embed_mean = torch.mean(x_embed, dim=1)

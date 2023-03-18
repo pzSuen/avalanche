@@ -37,7 +37,7 @@ class TestReplayDataLoader(unittest.TestCase):
         self._task_dataset = None
 
     def _make_loader(self, **kwargs):
-        loader = ReplayDataLoader(
+        return ReplayDataLoader(
             self._task_dataset,
             self.memory_set,
             batch_size=self._batch_size,
@@ -46,7 +46,6 @@ class TestReplayDataLoader(unittest.TestCase):
             drop_last=True,
             **kwargs
         )
-        return loader
 
     def _test_batch_size(self, loader):
         for batch in loader:
@@ -56,9 +55,7 @@ class TestReplayDataLoader(unittest.TestCase):
         self.assertEqual(len(loader), self._length)
 
     def _test_actual_length(self, loader):
-        counter = 0
-        for batch in loader:
-            counter += 1
+        counter = sum(1 for _ in loader)
         self.assertEqual(counter, self._length)
 
     def _launch_test_suite(self, loader):

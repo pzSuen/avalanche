@@ -118,7 +118,7 @@ def _compute_aspect_ratios_slow(dataset, indices=None):
     )
     aspect_ratios = []
     with tqdm(total=len(dataset)) as pbar:
-        for _i, (img, _) in enumerate(data_loader):
+        for img, _ in data_loader:
             pbar.update(1)
             height, width = img.shape[-2:]
             aspect_ratio = float(width) / float(height)
@@ -188,8 +188,7 @@ def compute_aspect_ratios(dataset, indices=None):
 def _quantize(x, bins):
     bins = copy.deepcopy(bins)
     bins = sorted(bins)
-    quantized = list(map(lambda y: bisect.bisect_right(bins, y), x))
-    return quantized
+    return list(map(lambda y: bisect.bisect_right(bins, y), x))
 
 
 def create_aspect_ratio_groups(dataset, k=0):

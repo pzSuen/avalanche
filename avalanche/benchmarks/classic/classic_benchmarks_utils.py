@@ -16,7 +16,7 @@ def check_vision_benchmark(benchmark_instance, show_without_transforms=True):
         "training experiences.",
     )
 
-    for i, exp in enumerate(benchmark_instance.train_stream):
+    for exp in benchmark_instance.train_stream:
         dataset, t = exp.dataset, exp.task_label
         if show_without_transforms:
             dataset = dataset.replace_current_transform_group(ToTensor(), None)
@@ -31,7 +31,7 @@ def check_vision_benchmark(benchmark_instance, show_without_transforms=True):
             if len(other) > 0:
                 print("T tensor:", other[0].shape)
             img = ToPILImage()(x[0])
-            plt.title("Experience: " + str(exp.current_experience))
+            plt.title(f"Experience: {str(exp.current_experience)}")
             plt.imshow(img)
             plt.show()
             break  # Show only an image for each experience

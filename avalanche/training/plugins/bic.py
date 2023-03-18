@@ -123,17 +123,14 @@ class BiCPlugin(SupervisedPlugin):
         for idx, target in enumerate(new_data.targets):
             cl_idxs[target].append(idx) 
 
-        for c in cl_idxs.keys():
+        for c in cl_idxs:
             self.class_to_tasks[c] = task_id
 
         self.seen_classes.update(cl_idxs.keys())
         lens = self.get_group_lengths(len(self.seen_classes))
-        class_to_len = {}
-        for class_id, ll in zip(self.seen_classes, lens):
-            class_to_len[class_id] = ll
-
+        class_to_len = dict(zip(self.seen_classes, lens))
         train_data = []
-        for class_id in cl_idxs.keys():
+        for class_id, value in cl_idxs.items():
             ll = class_to_len[class_id]
             new_data_c = classification_subset(
                                             new_data,
@@ -147,9 +144,7 @@ class BiCPlugin(SupervisedPlugin):
                 new_buffer.update_from_dataset(new_data_c)
                 self.val_buffer[class_id] = new_buffer
 
-            train_data.append(classification_subset(
-                                            new_data,
-                                            cl_idxs[class_id][ll:]))
+            train_data.append(classification_subset(new_data, value[ll:]))
 
         # resize buffers
         for class_id, class_buf in self.val_buffer.items():
@@ -211,18 +206,18 @@ class BiCPlugin(SupervisedPlugin):
             strategy.mb_output = self.bias_layer[t](strategy.mb_output)
 
     def before_backward(self, strategy, **kwargs):
-        # Distill
-        task_id = strategy.experience.current_experience
-
         if self.model_old is not None:
             out_old = self.model_old(strategy.mb_x.to(strategy.device))
             out_new = strategy.model(strategy.mb_x.to(strategy.device))
 
-            old_clss = []
-            for c in self.class_to_tasks.keys():
-                if self.class_to_tasks[c] < task_id:
-                    old_clss.append(c)
-            
+            # Distill
+            task_id = strategy.experience.current_experience
+
+            old_clss = [
+                c
+                for c in self.class_to_tasks.keys()
+                if self.class_to_tasks[c] < task_id
+            ]
             loss_dist = self.cross_entropy(out_new[:, old_clss],
                                            out_old[:, old_clss])
             if self.lamb == -1:
@@ -237,24 +232,21 @@ class BiCPlugin(SupervisedPlugin):
         self.storage_policy.update(strategy, **kwargs)
 
         if task_id > 0:
-            list_subsets = []
-            for _, class_buf in self.val_buffer.items():
-                list_subsets.append(class_buf.buffer)
-            
+            list_subsets = [class_buf.buffer for _, class_buf in self.val_buffer.items()]
             stage_set = concat_classification_datasets(list_subsets)
             stage_loader = DataLoader(
                                 stage_set, 
                                 batch_size=strategy.train_mb_size, 
                                 shuffle=True,
                                 num_workers=4)
-            
+
             bic_optimizer = torch.optim.SGD(
                                 self.bias_layer[task_id].parameters(), 
                                 lr=self.lr, momentum=0.9)
 
             scheduler = MultiStepLR(bic_optimizer, milestones=[50, 100, 150], 
                                     gamma=0.1, verbose=False)
-            
+
             # Loop epochs
             for e in range(self.stage_2_epochs):
                 total, t_acc, t_loss = 0, 0, 0
@@ -269,7 +261,7 @@ class BiCPlugin(SupervisedPlugin):
                     loss = torch.nn.functional.cross_entropy(
                                                             outputs, 
                                                             y_real)
-                        
+
                     _, preds = torch.max(outputs, 1)
                     t_acc += torch.sum(preds == y_real.data)
                     t_loss += loss.item() * x.size(0)
@@ -281,7 +273,7 @@ class BiCPlugin(SupervisedPlugin):
                     bic_optimizer.zero_grad()
                     loss.backward()
                     bic_optimizer.step()
-                
+
                 scheduler.step()
                 if (e + 1) % (int(self.stage_2_epochs / 4)) == 0:
                     print('| E {:3d} | Train: loss={:.3f}, S2 acc={:5.1f}% |'

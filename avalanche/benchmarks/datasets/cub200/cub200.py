@@ -161,9 +161,7 @@ class CUB200(PathsDataset, DownloadableDataset):
                     # PathsDataset accepts (top, left, height, width)
                     self._images[img_id].append(box_avl)
 
-        images_tuples = []
-        for _, img_tuple in self._images.items():
-            images_tuples.append(tuple(img_tuple))
+        images_tuples = [tuple(img_tuple) for _, img_tuple in self._images.items()]
         self._images = images_tuples
 
         # Integrity check

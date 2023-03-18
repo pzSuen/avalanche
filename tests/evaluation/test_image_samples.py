@@ -10,7 +10,7 @@ from avalanche.evaluation.metrics import ImagesSamplePlugin
 
 
 class ImageSamplesTests(unittest.TestCase):
-    def test_image_samples(args):
+    def test_image_samples(self):
         p_metric = ImagesSamplePlugin(
             n_cols=5, n_rows=5, group=True, mode="train"
         )
@@ -27,7 +27,7 @@ class ImageSamplesTests(unittest.TestCase):
 
         # save_image(img_grid, './logs/test_image_grid.png')
 
-    def test_tensor_samples(args):
+    def test_tensor_samples(self):
         p_metric = ImagesSamplePlugin(
             n_cols=5, n_rows=5, group=True, mode="train"
         )
@@ -49,7 +49,7 @@ class ImageSamplesTests(unittest.TestCase):
 
         # save_image(img_grid, './logs/test_tensor_grid.png')
 
-    def test_samples_augmentations(args):
+    def test_samples_augmentations(self):
         scenario = SplitMNIST(5)
         curr_exp = scenario.train_stream[0]
 

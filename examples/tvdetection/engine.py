@@ -44,15 +44,15 @@ def train_one_epoch(
     for images, targets, *_ in metric_logger.log_every(
         data_loader, print_freq, header
     ):
-        images = list(image.to(device) for image in images)
+        images = [image.to(device) for image in images]
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         with torch.cuda.amp.autocast(enabled=scaler is not None):
             loss_dict = model(images, targets)
-            losses = sum(loss for loss in loss_dict.values())
+            losses = sum(loss_dict.values())
 
         # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = reduce_dict(loss_dict)
-        losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+        losses_reduced = sum(loss_dict_reduced.values())
 
         loss_value = losses_reduced.item()
 
@@ -100,7 +100,7 @@ def evaluate_coco(
     for images, targets, *_ in metric_logger.log_every(
         data_loader, 100, header
     ):
-        images = list(img.to(device) for img in images)
+        images = [img.to(device) for img in images]
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
@@ -143,7 +143,7 @@ def evaluate_lvis(
     for images, targets, *_ in metric_logger.log_every(
         data_loader, 100, header
     ):
-        images = list(img.to(device) for img in images)
+        images = [img.to(device) for img in images]
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
@@ -212,9 +212,7 @@ def evaluate(model, data_loader, device):
 def get_detection_api_from_dataset(dataset):
     # Lorenzo: adapted to support LVIS and AvalancheDataset
     for _ in range(10):
-        if isinstance(dataset, CocoDetection):
-            break
-        elif hasattr(dataset, "lvis_api"):
+        if isinstance(dataset, CocoDetection) or hasattr(dataset, "lvis_api"):
             break
         elif isinstance(dataset, Subset):
             dataset = dataset.dataset

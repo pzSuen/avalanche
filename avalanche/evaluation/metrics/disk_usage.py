@@ -55,10 +55,10 @@ class DiskUsage(Metric[float]):
         :return None.
         """
 
-        dirs_size = 0
-        for directory in self._paths_to_monitor:
-            dirs_size += DiskUsage.get_dir_size(directory)
-
+        dirs_size = sum(
+            DiskUsage.get_dir_size(directory)
+            for directory in self._paths_to_monitor
+        )
         self.total_usage = dirs_size
 
     def result(self) -> Optional[float]:

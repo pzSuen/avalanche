@@ -220,7 +220,7 @@ def SplitCIFAR110(
         [cifar10_train, cifar100_train], [cifar10_test, cifar100_test]
     )
     # cifar10 classes
-    class_order = [_ for _ in range(10)]
+    class_order = list(range(10))
     # if a class order is defined (for cifar100) the given class labels are
     # appended to the class_order list, adding 10 to them (since the classes
     # 0-9 are the classes of cifar10).

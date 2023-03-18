@@ -197,8 +197,8 @@ class ViTWithPrompt(VisionTransformer):
                 end = (task_id + 1) * self.prompt.top_k
                 single_prompt_mask = torch.arange(start, end).to(x.device)
                 prompt_mask = single_prompt_mask.\
-                    unsqueeze(0).\
-                    expand(x.shape[0], -1)
+                        unsqueeze(0).\
+                        expand(x.shape[0], -1)
                 if end > self.prompt.pool_size:
                     prompt_mask = None
             else:
@@ -211,7 +211,7 @@ class ViTWithPrompt(VisionTransformer):
             self.total_prompt_len = res["total_prompt_len"]
             x = res["prompted_embedding"]
         else:
-            res = dict()
+            res = {}
         if self.cls_token is not None:
             x = torch.cat((self.cls_token.expand(x.shape[0], -1, -1), x), dim=1)
 
@@ -373,7 +373,7 @@ def _load_weights(
     #               copy_(_n2p(w[f'{prefix}pre_logits/bias']))
     for i, block in enumerate(model.blocks.children()):
         block_prefix = f"{prefix}Transformer/encoderblock_{i}/"
-        mha_prefix = block_prefix + "MultiHeadDotProductAttention_1/"
+        mha_prefix = f"{block_prefix}MultiHeadDotProductAttention_1/"
         block.norm1.weight.copy_(_n2p(w[f"{block_prefix}LayerNorm_0/scale"]))
         block.norm1.bias.copy_(_n2p(w[f"{block_prefix}LayerNorm_0/bias"]))
         block.attn.qkv.weight.copy_(
@@ -487,7 +487,7 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
     pretrained_cfg = resolve_pretrained_cfg(
         variant, pretrained_cfg=kwargs.pop("pretrained_cfg", None)
     )
-    model = build_model_with_cfg(
+    return build_model_with_cfg(
         ViTWithPrompt,
         variant,
         pretrained,
@@ -496,4 +496,3 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
         pretrained_custom_load="npz" in pretrained_cfg["url"],
         **kwargs,
     )
-    return model

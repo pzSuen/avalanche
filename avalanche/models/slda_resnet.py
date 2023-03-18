@@ -49,8 +49,7 @@ class SLDAResNetModel(nn.Module):
         features3 = torch.reshape(
             features2, (features.shape[0], feat_size * feat_size, num_channels)
         )
-        feat = features3.mean(1)  # mb x num_channels
-        return feat
+        return features3.mean(1)
 
     def forward(self, x):
         """

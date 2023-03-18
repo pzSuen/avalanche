@@ -41,10 +41,9 @@ class LFLPlugin(SupervisedPlugin):
         """
         if self.prev_model is None:
             return 0
-        else:
-            features, prev_features = self.compute_features(model, x)
-            dist_loss = self._euclidean_loss(features, prev_features)
-            return lambda_e * dist_loss
+        features, prev_features = self.compute_features(model, x)
+        dist_loss = self._euclidean_loss(features, prev_features)
+        return lambda_e * dist_loss
 
     def compute_features(self, model, x):
         """
@@ -92,4 +91,4 @@ class LFLPlugin(SupervisedPlugin):
         is implemented
         """
         if not isinstance(strategy.model, BaseModel):
-            raise NotImplementedError(BaseModel.__name__ + ".get_features()")
+            raise NotImplementedError(f"{BaseModel.__name__}.get_features()")

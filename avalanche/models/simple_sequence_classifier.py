@@ -22,8 +22,7 @@ class SimpleSequenceClassifier(torch.nn.Module):
     def forward(self, x):
         out, _ = self.rnn(x)
         out = out[:, -1] if self.batch_first else out[-1]
-        out = self.classifier(out)
-        return out
+        return self.classifier(out)
 
 
 class MTSimpleSequenceClassifier(MultiTaskModule):

@@ -42,8 +42,7 @@ def remove_DwsConvBlock(cur_layers):
     for layer in cur_layers:
         if isinstance(layer, DwsConvBlock):
             # print("helloooo: ", layer)
-            for ch in layer.children():
-                all_layers.append(ch)
+            all_layers.extend(iter(layer.children()))
         else:
             all_layers.append(layer)
     return all_layers
@@ -91,10 +90,7 @@ class MobilenetV1(nn.Module):
         x = x.view(x.size(0), -1)
         logits = self.output(x)
 
-        if return_lat_acts:
-            return logits, orig_acts
-        else:
-            return logits
+        return (logits, orig_acts) if return_lat_acts else logits
 
 
 if __name__ == "__main__":

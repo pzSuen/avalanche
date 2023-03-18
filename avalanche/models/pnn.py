@@ -29,9 +29,7 @@ class LinearAdapter(nn.Module):
 
     def forward(self, x):
         assert len(x) == self.num_prev_modules
-        hs = []
-        for ii, lat in enumerate(self.lat_layers):
-            hs.append(lat(x[ii]))
+        hs = [lat(x[ii]) for ii, lat in enumerate(self.lat_layers)]
         return sum(hs)
 
 
@@ -216,10 +214,7 @@ class PNNLayer(MultiTaskModule):
         :return:
         """
         col_idx = self.task_to_module_idx[task_label]
-        hs = []
-        for ii in range(col_idx + 1):
-            hs.append(self.columns[ii](x[: ii + 1]))
-        return hs
+        return [self.columns[ii](x[: ii + 1]) for ii in range(col_idx + 1)]
 
 
 class PNN(MultiTaskModule):

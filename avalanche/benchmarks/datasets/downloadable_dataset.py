@@ -138,9 +138,8 @@ class DownloadableDataset(Dataset[T_co], ABC):
             )
             if metadata_load_error is None:
                 raise RuntimeError(msg)
-            else:
-                print(msg)
-                raise metadata_load_error
+            print(msg)
+            raise metadata_load_error
 
         try:
             self._download_dataset()

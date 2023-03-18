@@ -34,8 +34,7 @@ class AvalancheDatasetTests(unittest.TestCase):
 
         # compute expected indices after all permutations
         current_indices = range(d_sz)
-        true_indices = []
-        true_indices.append(list(current_indices))
+        true_indices = [list(current_indices)]
         for idx in range(dataset_hierarchy_depth):
             current_indices = [current_indices[x] for x in perms[idx]]
             true_indices.append(current_indices)
@@ -84,7 +83,7 @@ class AvalancheDatasetTests(unittest.TestCase):
         fdata = FlatData([x])
 
         dd = fdata
-        for i in range(5):
+        for _ in range(5):
             dd = dd.concat(fdata)
             assert _flatdata_depth(dd) == 2
             assert len(dd._datasets) == 1

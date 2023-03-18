@@ -206,7 +206,7 @@ class GenericCLScenario(Generic[TCLExperience]):
         element. Check the ``complete_test_set_only`` field for more details.
         """
 
-        self.complete_test_set_only: bool = bool(complete_test_set_only)
+        self.complete_test_set_only: bool = complete_test_set_only
         """
         If True, only the complete test set will be returned from experience
         instances.
@@ -216,12 +216,14 @@ class GenericCLScenario(Generic[TCLExperience]):
         make sense from a semantic point of view.
         """
 
-        if self.complete_test_set_only:
-            if len(self.stream_definitions["test"].exps_data) > 1:
-                raise ValueError(
-                    "complete_test_set_only is True, but the test stream"
-                    " contains more than one experience"
-                )
+        if (
+            self.complete_test_set_only
+            and len(self.stream_definitions["test"].exps_data) > 1
+        ):
+            raise ValueError(
+                "complete_test_set_only is True, but the test stream"
+                " contains more than one experience"
+            )
 
         if experience_factory is None:
             experience_factory = GenericClassificationExperience
@@ -244,11 +246,10 @@ class GenericCLScenario(Generic[TCLExperience]):
         "ClassificationStream["
         "TCLExperience, TGenericCLClassificationScenario]",
     ]:
-        streams_dict = dict()
-        for stream_name in self.stream_definitions.keys():
-            streams_dict[stream_name] = getattr(self, f"{stream_name}_stream")
-
-        return streams_dict
+        return {
+            stream_name: getattr(self, f"{stream_name}_stream")
+            for stream_name in self.stream_definitions.keys()
+        }
 
     @property
     def n_experiences(self) -> int:
@@ -259,12 +260,10 @@ class GenericCLScenario(Generic[TCLExperience]):
     @property
     def task_labels(self) -> Sequence[List[int]]:
         """The task label of each training experience."""
-        t_labels = []
-
-        for exp_t_labels in self.stream_definitions["train"].exps_task_labels:
-            t_labels.append(list(exp_t_labels))
-
-        return t_labels
+        return [
+            list(exp_t_labels)
+            for exp_t_labels in self.stream_definitions["train"].exps_task_labels
+        ]
 
     def get_reproducibility_data(self) -> Dict[str, Any]:
         """
@@ -286,7 +285,7 @@ class GenericCLScenario(Generic[TCLExperience]):
             experiment.
         """
 
-        return dict()
+        return {}
 
     @property
     def classes_in_experience(
@@ -343,7 +342,7 @@ class GenericCLScenario(Generic[TCLExperience]):
             classes_in_this_exp = None
 
         class_set_prev_exps: Optional[Set] = set()
-        for exp_id in range(0, current_experience):
+        for exp_id in range(current_experience):
             prev_exp_classes = self.classes_in_experience[stream][exp_id]
             if prev_exp_classes is None:
                 # May be None in lazy benchmarks
@@ -417,7 +416,7 @@ class GenericCLScenario(Generic[TCLExperience]):
         :param stream_definitions: The input stream definitions.
         :return: The checked and adapted stream definitions.
         """
-        streams_defs = dict()
+        streams_defs = {}
 
         if "train" not in stream_definitions:
             raise ValueError("No train stream found!")
@@ -447,46 +446,37 @@ class GenericCLScenario(Generic[TCLExperience]):
         stream_def: TStreamUserDef, stream_name: str
     ) -> StreamDef:
         exp_data = stream_def[0]
-        task_labels = None
-        origin_dataset = None
-        is_lazy = None
-
-        if len(stream_def) > 1:
-            task_labels = stream_def[1]
-
-        if len(stream_def) > 2:
-            origin_dataset = stream_def[2]
-
-        if len(stream_def) > 3:
-            is_lazy = stream_def[3]
-
-        if is_lazy or (isinstance(exp_data, tuple) and (is_lazy is None)):
-            # Creation based on a generator
-            if is_lazy:
+        task_labels = stream_def[1] if len(stream_def) > 1 else None
+        origin_dataset = stream_def[2] if len(stream_def) > 2 else None
+        is_lazy = stream_def[3] if len(stream_def) > 3 else None
+        if is_lazy:
                 # We also check for LazyDatasetSequence, which is sufficient
                 # per se (only if is_lazy==True, otherwise is treated as a
                 # standard Sequence)
-                if not isinstance(exp_data, LazyDatasetSequence):
-                    if (not isinstance(exp_data, tuple)) or (
-                        not len(exp_data) == 2
-                    ):
-                        raise ValueError(
-                            f"The stream {stream_name} was flagged as "
-                            f"lazy-generated but its definition is not a "
-                            f"2-elements tuple (generator and stream length)."
-                        )
+            if not isinstance(exp_data, LazyDatasetSequence) and (
+                not isinstance(exp_data, tuple) or len(exp_data) != 2
+            ):
+                raise ValueError(
+                    f"The stream {stream_name} was flagged as "
+                    f"lazy-generated but its definition is not a "
+                    f"2-elements tuple (generator and stream length)."
+                )
+            if isinstance(exp_data, LazyDatasetSequence):
+                stream_length = len(exp_data)
             else:
-                if (not len(exp_data) == 2) or (
-                    not isinstance(exp_data[1], int)
-                ):
-                    raise ValueError(
-                        f"The stream {stream_name} was detected "
-                        f"as lazy-generated but its definition is not a "
-                        f"2-elements tuple. If you're trying to define a "
-                        f"non-lazily generated stream, don't use a tuple "
-                        f"when passing the list of datasets, use a list "
-                        f"instead."
-                    )
+                # exp_data[0] must contain the generator
+                stream_length = exp_data[1]
+            is_lazy = True
+        elif (isinstance(exp_data, tuple) and (is_lazy is None)):
+            if len(exp_data) != 2 or not isinstance(exp_data[1], int):
+                raise ValueError(
+                    f"The stream {stream_name} was detected "
+                    f"as lazy-generated but its definition is not a "
+                    f"2-elements tuple. If you're trying to define a "
+                    f"non-lazily generated stream, don't use a tuple "
+                    f"when passing the list of datasets, use a list "
+                    f"instead."
+                )
 
             if isinstance(exp_data, LazyDatasetSequence):
                 stream_length = len(exp_data)
@@ -505,7 +495,7 @@ class GenericCLScenario(Generic[TCLExperience]):
             is_lazy = False
 
         if not is_lazy:
-            for i, dataset in enumerate(exp_data):
+            for dataset in exp_data:
                 if not isinstance(dataset, ClassificationDataset):
                     raise ValueError(
                         "All experience datasets must be subclasses of"
@@ -658,19 +648,17 @@ class ClassificationStream(
         :return: The experience instance associated to the given experience
             index or a sliced stream instance.
         """
-        if isinstance(exp_idx, int):
-            if exp_idx < len(self):
-                if self.slice_ids is None:
-                    return self.benchmark.experience_factory(self, exp_idx)
-                else:
-                    return self.benchmark.experience_factory(
-                        self, self.slice_ids[exp_idx]
-                    )
-            raise IndexError(
-                "Experience index out of bounds" + str(int(exp_idx))
-            )
-        else:
+        if not isinstance(exp_idx, int):
             return self._create_slice(exp_idx)
+        if exp_idx < len(self):
+            return (
+                self.benchmark.experience_factory(self, exp_idx)
+                if self.slice_ids is None
+                else self.benchmark.experience_factory(
+                    self, self.slice_ids[exp_idx]
+                )
+            )
+        raise IndexError(f"Experience index out of bounds{int(exp_idx)}")
 
     def _create_slice(
         self: TGenericScenarioStream,
@@ -780,9 +768,7 @@ class LazyClassesInExps(Sequence[Optional[Set[int]]]):
         if not b.is_lazy and exp_id not in b.exps_data.targets_field_sequence:
             raise IndexError
         targets = b.exps_data.targets_field_sequence[exp_id]
-        if targets is None:
-            return None
-        return set(targets)
+        return None if targets is None else set(targets)
 
     @staticmethod
     def _slice_collate(*classes_in_exps: Optional[Set[int]]):
@@ -811,14 +797,10 @@ def _get_slice_ids(
 
     # Check experience id(s) boundaries
     if max(exps_list) >= sliceable_len:
-        raise IndexError(
-            "Experience index out of range: " + str(max(exps_list))
-        )
+        raise IndexError(f"Experience index out of range: {str(max(exps_list))}")
 
     if min(exps_list) < 0:
-        raise IndexError(
-            "Experience index out of range: " + str(min(exps_list))
-        )
+        raise IndexError(f"Experience index out of range: {str(min(exps_list))}")
 
     return exps_list
 

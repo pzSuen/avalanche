@@ -129,12 +129,10 @@ class INATURALIST2018(Dataset):
 
         # Filter full dataset parsed
         for ann in self.ds.anns.values():
-            img_id = ann["image_id"]
             cat_id = ann["category_id"]
 
             # img = self.ds.loadImgs(img_id)[0]["file_name"]  # Img Path
             cat = self.ds.loadCats(cat_id)[0]  # Get category
-            target = cat["name"]  # Is subdirectory
             supcat = cat["supercategory"]  # Is parent directory
 
             if self.supcats is None or supcat in self.supcats:  # Made selection
@@ -142,12 +140,14 @@ class INATURALIST2018(Dataset):
                 # Add category to supercategory
                 if supcat not in self.cats_per_supcat:
                     self.cats_per_supcat[supcat] = set()
+                target = cat["name"]  # Is subdirectory
                 self.cats_per_supcat[supcat].add(int(target))  # Need int
 
+                img_id = ann["image_id"]
                 # Add to list
                 self.img_ids.append(img_id)
                 self.targets.append(target)
-                # self.suptargets.append(supcat)
+                        # self.suptargets.append(supcat)
 
         cnt_per_supcat = {k: len(v) for k, v in self.cats_per_supcat.items()}
         self.log.info("Classes per supercategories:")

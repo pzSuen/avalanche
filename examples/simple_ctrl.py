@@ -84,22 +84,19 @@ def main(args):
         cl_strategy.train(train_task, eval_streams=[val_task])
         cl_strategy.eval(test_stream)
 
-    transfer_mat = []
-    for tid in range(len(train_stream)):
-        transfer_mat.append(
-            logger.all_metric_results[
-                "Top1_Acc_Exp/eval_phase/test_stream/" f"Task00{tid}/Exp00{tid}"
-            ][1]
-        )
-
+    transfer_mat = [
+        logger.all_metric_results[
+            "Top1_Acc_Exp/eval_phase/test_stream/" f"Task00{tid}/Exp00{tid}"
+        ][1]
+        for tid in range(len(train_stream))
+    ]
     if args.stream == "s_long":
-        res = []
-        for tid in range(len(train_stream)):
-            res.append(
-                logger.last_metric_results[
-                    "Top1_Acc_Stream/eval_phase/test_stream/" f"Task00{tid}"
-                ]
-            )
+        res = [
+            logger.last_metric_results[
+                "Top1_Acc_Stream/eval_phase/test_stream/" f"Task00{tid}"
+            ]
+            for tid in range(len(train_stream))
+        ]
         print(f"Average accuracy on S_long : {np.mean(res)}")
     else:
         optimizer = SGD(model_init.parameters(), lr=0.001, momentum=0.9)

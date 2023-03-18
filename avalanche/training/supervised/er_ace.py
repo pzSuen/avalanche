@@ -20,8 +20,7 @@ from avalanche.training.templates import (OnlineSupervisedTemplate,
 
 def cycle(loader):
     while True:
-        for batch in loader:
-            yield batch
+        yield from loader
 
 
 class OnlineER_ACE(OnlineSupervisedTemplate):

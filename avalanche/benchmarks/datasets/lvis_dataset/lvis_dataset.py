@@ -93,7 +93,7 @@ class LvisDataset(DownloadableDataset):
 
         for name, url, checksum in data2download:
             if self.verbose:
-                print("Downloading " + name + "...")
+                print(f"Downloading {name}...")
 
             result_file = self._download_file(url, name, checksum)
             if self.verbose:
@@ -173,26 +173,24 @@ class LvisDataset(DownloadableDataset):
             boxes.append([xmin, ymin, xmax, ymax])
             labels.append(annotation_dicts[i]["category_id"])
 
-        if len(boxes) > 0:
+        if boxes:
             boxes = torch.as_tensor(boxes, dtype=torch.float32)
         else:
             boxes = torch.empty((0, 4), dtype=torch.float32)
         labels = torch.as_tensor(labels, dtype=torch.int64)
 
         image_id = torch.tensor([img_id])
-        areas = []
-        for i in range(num_objs):
-            areas.append(annotation_dicts[i]["area"])
+        areas = [annotation_dicts[i]["area"] for i in range(num_objs)]
         areas = torch.as_tensor(areas, dtype=torch.float32)
         iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
 
-        target = dict()
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["image_id"] = image_id
-        target["area"] = areas
-        target["iscrowd"] = iscrowd
-
+        target = {
+            "boxes": boxes,
+            "labels": labels,
+            "image_id": image_id,
+            "area": areas,
+            "iscrowd": iscrowd,
+        }
         img = self._load_img(img_dict)
 
         if self.transform is not None:
@@ -206,7 +204,7 @@ class LvisDataset(DownloadableDataset):
     def _load_img(self, img_dict: "LVISImgEntry"):
         coco_url = img_dict["coco_url"]
         splitted_url = coco_url.split("/")
-        img_path = splitted_url[-2] + "/" + splitted_url[-1]
+        img_path = f"{splitted_url[-2]}/{splitted_url[-1]}"
         final_path = self.root / img_path  # <root>/train2017/<img_id>.jpg
         return self.loader(str(final_path))
 

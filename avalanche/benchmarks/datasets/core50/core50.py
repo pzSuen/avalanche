@@ -97,11 +97,7 @@ class CORe50Dataset(DownloadableDataset):
         """
 
         target = self.targets[index]
-        if self.mini:
-            bp = "core50_32x32"
-        else:
-            bp = "core50_128x128"
-
+        bp = "core50_32x32" if self.mini else "core50_128x128"
         img = self.loader(str(self.root / bp / self.paths[index]))
         if self.transform is not None:
             img = self.transform(img)
@@ -122,7 +118,7 @@ class CORe50Dataset(DownloadableDataset):
 
         for name in data2download:
             if self.verbose:
-                print("Downloading " + name[1] + "...")
+                print(f"Downloading {name[1]}...")
             file = self._download_file(name[1], name[0], name[2])
             if name[1].endswith(".zip"):
                 if self.verbose:
@@ -132,11 +128,7 @@ class CORe50Dataset(DownloadableDataset):
                     print("Extraction completed!")
 
     def _load_metadata(self) -> bool:
-        if self.mini:
-            bp = "core50_32x32"
-        else:
-            bp = "core50_128x128"
-
+        bp = "core50_32x32" if self.mini else "core50_128x128"
         if not (self.root / bp).exists():
             return False
 
@@ -203,7 +195,7 @@ class CORe50Dataset(DownloadableDataset):
             base_msg += url
             base_msg += "\n"
 
-        base_msg += "and place these files in " + str(self.root)
+        base_msg += f"and place these files in {str(self.root)}"
 
         return base_msg
 
@@ -213,24 +205,23 @@ class CORe50Dataset(DownloadableDataset):
 
         for k, v in core50_data.scen2dirs.items():
             orig_root_path = os.path.join(self.root, v)
-            root_path = os.path.join(self.root, v[:-1] + "_cat")
+            root_path = os.path.join(self.root, f"{v[:-1]}_cat")
             if not os.path.exists(root_path):
                 os.makedirs(root_path)
             for run in range(10):
-                cur_path = os.path.join(root_path, "run" + str(run))
-                orig_cur_path = os.path.join(orig_root_path, "run" + str(run))
+                cur_path = os.path.join(root_path, f"run{str(run)}")
+                orig_cur_path = os.path.join(orig_root_path, f"run{str(run)}")
                 if not os.path.exists(cur_path):
                     os.makedirs(cur_path)
                 for file in glob.glob(os.path.join(orig_cur_path, "*.txt")):
                     o_filename = file
                     _, d_filename = os.path.split(o_filename)
-                    orig_f = open(o_filename, "r")
-                    dst_f = open(os.path.join(cur_path, d_filename), "w")
-                    for line in orig_f:
-                        path, label = line.split(" ")
-                        new_label = self._objlab2cat(int(label), k, run)
-                        dst_f.write(path + " " + str(new_label) + "\n")
-                    orig_f.close()
+                    with open(o_filename, "r") as orig_f:
+                        dst_f = open(os.path.join(cur_path, d_filename), "w")
+                        for line in orig_f:
+                            path, label = line.split(" ")
+                            new_label = self._objlab2cat(int(label), k, run)
+                            dst_f.write(f"{path} {str(new_label)}" + "\n")
                     dst_f.close()
 
     def _objlab2cat(self, label, scen, run):

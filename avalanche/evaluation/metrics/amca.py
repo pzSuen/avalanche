@@ -150,7 +150,7 @@ class AverageMeanClassAccuracy(Metric[Dict[int, float]]):
 
         mean_accs = OrderedDict()
         for task_id in sorted(all_task_ids):
-            prev_accs = self._prev_exps_accuracies.get(task_id, list())
+            prev_accs = self._prev_exps_accuracies.get(task_id, [])
             curr_acc = curr_task_acc.get(task_id, 0)
             mean_accs[task_id] = fmean(prev_accs + [curr_acc])
 
@@ -183,7 +183,7 @@ class AverageMeanClassAccuracy(Metric[Dict[int, float]]):
         self._prev_exps_accuracies.clear()
 
     def _get_curr_task_acc(self):
-        task_acc = dict()
+        task_acc = {}
         class_acc = self._class_accuracies.result()
         for task_id, task_classes in class_acc.items():
             class_accuracies = list(task_classes.values())
@@ -217,7 +217,7 @@ class MultiStreamAMCA(Metric[Dict[str, Dict[int, float]]]):
             self._limit_streams = set(self._limit_streams)
 
         self._limit_classes = classes
-        self._amcas: Dict[str, AverageMeanClassAccuracy] = dict()
+        self._amcas: Dict[str, AverageMeanClassAccuracy] = {}
 
         self._current_stream: Optional[str] = None
         self._streams_in_this_phase: Set[str] = set()
@@ -388,18 +388,17 @@ class AMCAPluginMetric(_ExtendedGenericPluginMetric):
         stream_amca = self._ms_amca.result()
 
         for stream_name, stream_accs in stream_amca.items():
-            for task_id, task_amca in stream_accs.items():
-                metric_values.append(
-                    _ExtendedPluginMetricValue(
-                        metric_name=str(self),
-                        metric_value=task_amca,
-                        phase_name="eval",
-                        stream_name=stream_name,
-                        task_label=task_id,
-                        experience_id=None,
-                    )
+            metric_values.extend(
+                _ExtendedPluginMetricValue(
+                    metric_name=str(self),
+                    metric_value=task_amca,
+                    phase_name="eval",
+                    stream_name=stream_name,
+                    task_label=task_id,
+                    experience_id=None,
                 )
-
+                for task_id, task_amca in stream_accs.items()
+            )
         return metric_values
 
     def metric_value_name(self, m_value: _ExtendedPluginMetricValue) -> str:

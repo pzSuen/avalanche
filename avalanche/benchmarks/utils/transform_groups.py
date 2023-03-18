@@ -61,9 +61,8 @@ class TransformGroups:
         self.transform_groups = transform_groups
         self.current_group = current_group
 
-        if "train" in transform_groups:
-            if "eval" not in transform_groups:
-                transform_groups["eval"] = transform_groups["train"]
+        if "train" in transform_groups and "eval" not in transform_groups:
+            transform_groups["eval"] = transform_groups["train"]
 
         if "train" not in transform_groups:
             transform_groups["train"] = None
@@ -118,8 +117,7 @@ class TransformGroups:
             if len(res) > 0:
                 res += "\n"
             res += f"- {k}: {v}"
-        res = f"current_group: '{self.current_group}'\n" + res
-        return res
+        return f"current_group: '{self.current_group}'\n{res}"
 
     def __copy__(self):
         # copy of TransformGroups should copy the dictionary

@@ -13,6 +13,7 @@
 Example: Training and evaluating on CLEAR benchmark (RGB images)
 """
 
+
 import json
 from pathlib import Path
 
@@ -39,7 +40,7 @@ from avalanche.benchmarks.classic.clear import CLEAR, CLEARMetric
 # For CLEAR dataset setup
 DATASET_NAME = "clear100_cvpr2022"
 NUM_CLASSES = {"clear10": 11, "clear100_cvpr2022": 100}
-assert DATASET_NAME in NUM_CLASSES.keys()
+assert DATASET_NAME in NUM_CLASSES
 
 # please refer to paper for discussion on streaming v.s. iid protocol
 EVALUATION_PROTOCOL = "streaming"  # trainset = testset per timestamp
@@ -65,10 +66,9 @@ HPARAM = {
 
 
 def make_scheduler(optimizer, step_size, gamma=0.1):
-    scheduler = torch.optim.lr_scheduler.StepLR(
+    return torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=step_size, gamma=gamma
     )
-    return scheduler
 
 
 def main():
@@ -121,11 +121,7 @@ def main():
         loggers=[interactive_logger, text_logger, tb_logger],
     )
 
-    if EVALUATION_PROTOCOL == "streaming":
-        seed = None
-    else:
-        seed = 0
-
+    seed = None if EVALUATION_PROTOCOL == "streaming" else 0
     benchmark = CLEAR(
         data_name=DATASET_NAME,
         evaluation_protocol=EVALUATION_PROTOCOL,
@@ -195,11 +191,10 @@ def main():
     metric = CLEARMetric().get_metrics(accuracy_matrix)
     print(metric)
 
-    metric_log = open(ROOT / "metric_log.txt", "w+")
-    metric_log.write(f"Protocol: {EVALUATION_PROTOCOL} " f"Seed: {seed} ")
-    json.dump(accuracy_matrix.tolist(), metric_log, indent=6)
-    json.dump(metric, metric_log, indent=6)
-    metric_log.close()
+    with open(ROOT / "metric_log.txt", "w+") as metric_log:
+        metric_log.write(f"Protocol: {EVALUATION_PROTOCOL} " f"Seed: {seed} ")
+        json.dump(accuracy_matrix.tolist(), metric_log, indent=6)
+        json.dump(metric, metric_log, indent=6)
 
 
 if __name__ == "__main__":

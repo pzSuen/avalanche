@@ -23,7 +23,7 @@ def check_metrics_aligned(directory1, directory2):
     # Check that the metrics are aligned.
     for i in range(len(data1)):
         if data1[i] != data2[i]:
-            print('Metrics are not aligned for experience {}'.format(i))
+            print(f'Metrics are not aligned for experience {i}')
             sys.exit(1)
 
     print('Metrics are aligned')

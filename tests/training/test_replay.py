@@ -59,9 +59,7 @@ class ReplayTest(unittest.TestCase):
             n_seen_data += len(step.dataset)
             mem_fill = min(mem_size, n_seen_data)
             cl_strategy.train(step)
-            lengths = []
-            for d in replayPlugin.storage_policy.buffer_datasets:
-                lengths.append(len(d))
+            lengths = [len(d) for d in replayPlugin.storage_policy.buffer_datasets]
             self.assertEqual(sum(lengths), mem_fill)  # Always fully filled
 
     def test_balancing(self):
@@ -96,7 +94,7 @@ class ReplayTest(unittest.TestCase):
             print(list(ext_mem.keys()), [len(el) for el in ext_mem_data])
 
             # buffer size should equal self.mem_size if data is large enough
-            len_tot = sum([len(el) for el in ext_mem_data])
+            len_tot = sum(len(el) for el in ext_mem_data)
             assert len_tot == policy.max_size
 
 

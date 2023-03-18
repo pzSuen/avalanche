@@ -190,8 +190,7 @@ def split_online_stream(
 
     def exps_iter():
         for exp in original_stream:
-            for sub_exp in split_foo(exp, experience_size):
-                yield sub_exp
+            yield from split_foo(exp, experience_size)
 
     stream_name = (
         original_stream.name if hasattr(original_stream, "name") else "train"
@@ -258,7 +257,7 @@ class OnlineCLScenario(CLScenario):
             name_before = s.name
 
             # Set attributes of the new stream
-            s.name = "original_" + s.name
+            s.name = f"original_{s.name}"
             s.benchmark.stream_definitions[
                 s.name
             ] = s.benchmark.stream_definitions[name_before]

@@ -160,7 +160,7 @@ def CLStream51(
         # break files into task lists based on eval_num samples
         train_filelists_paths = []
         start = 0
-        for i in range(num_tasks):
+        for _ in range(num_tasks):
             end = min(start + eval_num, len(train_set))
             train_filelists_paths.append(
                 [
@@ -278,7 +278,7 @@ def CLStream51(
                 [[j[0], j[1]] for j in i] for i in test_ood_filelists_paths
             ]
 
-    benchmark_obj = create_generic_benchmark_from_paths(
+    return create_generic_benchmark_from_paths(
         train_lists_of_files=train_filelists_paths,
         test_lists_of_files=test_filelists_paths,
         task_labels=[0 for _ in range(num_tasks)],
@@ -286,8 +286,6 @@ def CLStream51(
         train_transform=train_transform,
         eval_transform=eval_transform,
     )
-
-    return benchmark_obj
 
 
 __all__ = ["CLStream51"]

@@ -79,18 +79,24 @@ class AvalancheDatasetTests(unittest.TestCase):
             root=default_dataset_location("mnist"), download=True
         )
 
-        ref_instance2_idx = None
-        for instance_idx, (_, instance_y) in enumerate(dataset_mnist):
-            if instance_y == 2:
-                ref_instance2_idx = instance_idx
-                break
+        ref_instance2_idx = next(
+            (
+                instance_idx
+                for instance_idx, (_, instance_y) in enumerate(dataset_mnist)
+                if instance_y == 2
+            ),
+            None,
+        )
         self.assertIsNotNone(ref_instance2_idx)
 
-        ref_instance_idx = None
-        for instance_idx, (_, instance_y) in enumerate(dataset_mnist):
-            if instance_y != 2:
-                ref_instance_idx = instance_idx
-                break
+        ref_instance_idx = next(
+            (
+                instance_idx
+                for instance_idx, (_, instance_y) in enumerate(dataset_mnist)
+                if instance_y != 2
+            ),
+            None,
+        )
         self.assertIsNotNone(ref_instance_idx)
 
         with self.assertWarns(
@@ -233,7 +239,7 @@ class AvalancheDatasetTests(unittest.TestCase):
                 torch.randint(0, 3, (10,)),
                 task_labels=torch.randint(0, 5, (10,)).tolist(),
             )
-            for i in range(3)
+            for _ in range(3)
         ]
         ts_ds = [
             make_tensor_classification_dataset(
@@ -241,7 +247,7 @@ class AvalancheDatasetTests(unittest.TestCase):
                 torch.randint(0, 3, (10,)),
                 task_labels=torch.randint(0, 5, (10,)).tolist(),
             )
-            for i in range(3)
+            for _ in range(3)
         ]
         benchmark = dataset_benchmark(train_datasets=tr_ds, test_datasets=ts_ds)
         model = SimpleMLP(input_size=4, num_classes=3)
@@ -542,8 +548,8 @@ class AvalancheDatasetTests(unittest.TestCase):
 
         x2, y2, z2, t2 = get_mbatch(dataset)
         self.assertIsInstance(x2, Tensor)
-        self.assertTrue(torch.equal(tensor_x[0:5], x2))
-        self.assertTrue(torch.equal(tensor_y[0:5] + 1, y2))
+        self.assertTrue(torch.equal(tensor_x[:5], x2))
+        self.assertTrue(torch.equal(tensor_y[:5] + 1, y2))
         self.assertTrue(torch.equal(torch.full((5,), -1, dtype=torch.long), z2))
         self.assertTrue(torch.equal(torch.zeros(5, dtype=torch.long), t2))
 
@@ -551,8 +557,8 @@ class AvalancheDatasetTests(unittest.TestCase):
 
         x3, y3, z3, t3 = get_mbatch(inherited)
         self.assertIsInstance(x3, Tensor)
-        self.assertTrue(torch.equal(tensor_x[0:5], x3))
-        self.assertTrue(torch.equal(tensor_y[0:5] + 1, y3))
+        self.assertTrue(torch.equal(tensor_x[:5], x3))
+        self.assertTrue(torch.equal(tensor_y[:5] + 1, y3))
         self.assertTrue(torch.equal(torch.full((5,), -1, dtype=torch.long), z3))
         self.assertTrue(torch.equal(torch.zeros(5, dtype=torch.long), t3))
 
@@ -585,8 +591,8 @@ class AvalancheDatasetTests(unittest.TestCase):
 
         x, y, z, t = get_mbatch(inherited)
         self.assertIsInstance(x, Tensor)
-        self.assertTrue(torch.equal(tensor_x[0:5], x))
-        self.assertTrue(torch.equal(tensor_y[0:5] + 2, y))
+        self.assertTrue(torch.equal(tensor_x[:5], x))
+        self.assertTrue(torch.equal(tensor_y[:5] + 2, y))
         self.assertTrue(torch.equal(torch.full((5,), -2, dtype=torch.long), z))
         self.assertTrue(torch.equal(torch.zeros(5, dtype=torch.long), t))
 
@@ -629,15 +635,15 @@ class AvalancheDatasetTests(unittest.TestCase):
 
         x, y, z, t = get_mbatch(dataset2)
         self.assertIsInstance(x, Tensor)
-        self.assertTrue(torch.equal(tensor_x2[0:5], x))
-        self.assertTrue(torch.equal(tensor_y2[0:5] + 1, y))
+        self.assertTrue(torch.equal(tensor_x2[:5], x))
+        self.assertTrue(torch.equal(tensor_y2[:5] + 1, y))
         self.assertTrue(torch.equal(torch.full((5,), -1, dtype=torch.long), z))
         self.assertTrue(torch.equal(torch.zeros(5, dtype=torch.long), t))
 
         x2, y2, z2, t2 = get_mbatch(concat)
         self.assertIsInstance(x2, Tensor)
-        self.assertTrue(torch.equal(tensor_x[0:5], x2))
-        self.assertTrue(torch.equal(tensor_y[0:5] + 2, y2))
+        self.assertTrue(torch.equal(tensor_x[:5], x2))
+        self.assertTrue(torch.equal(tensor_y[:5] + 2, y2))
         self.assertTrue(torch.equal(torch.full((5,), -2, dtype=torch.long), z2))
         self.assertTrue(torch.equal(torch.zeros(5, dtype=torch.long), t2))
 

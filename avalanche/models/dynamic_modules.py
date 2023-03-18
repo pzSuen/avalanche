@@ -182,10 +182,10 @@ class MultiTaskModule(DynamicModule):
             with task IDs as keys and the output of the corresponding
             task as output.
         """
-        res = {}
-        for task_id in self.known_train_tasks_labels:
-            res[task_id] = self.forward_single_task(x, task_id)
-        return res
+        return {
+            task_id: self.forward_single_task(x, task_id)
+            for task_id in self.known_train_tasks_labels
+        }
 
 
 class IncrementalClassifier(DynamicModule):
@@ -332,10 +332,10 @@ class MultiHeadClassifier(MultiTaskModule):
 
     @property
     def task_masks(self):
-        res = {}
-        for tid in self.known_train_tasks_labels:
-            res[tid] = getattr(self, f"active_units_T{tid}")
-        return res
+        return {
+            tid: getattr(self, f"active_units_T{tid}")
+            for tid in self.known_train_tasks_labels
+        }
 
     def adaptation(self, experience: CLExperience):
         """If `dataset` contains new tasks, a new head is initialized.

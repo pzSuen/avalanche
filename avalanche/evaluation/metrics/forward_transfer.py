@@ -43,13 +43,13 @@ class ForwardTransfer(Metric[Union[float, None, Dict[int, float]]]):
         Creates an instance of the standalone Forward Transfer metric
         """
 
-        self.initial: Dict[int, float] = dict()
+        self.initial: Dict[int, float] = {}
         """
         The initial value for each key. This is the accuracy at 
         random initialization.
         """
 
-        self.previous: Dict[int, float] = dict()
+        self.previous: Dict[int, float] = {}
         """
         The previous experience value detected for each key
         """
@@ -76,21 +76,13 @@ class ForwardTransfer(Metric[Union[float, None, Dict[int, float]]]):
             previous experience, and the key at random initialization.
         """
 
-        forward_transfer = {}
         if k is not None:
-            if k in self.previous:
-                return self.previous[k] - self.initial[k]
-            else:
-                return None
-
+            return self.previous[k] - self.initial[k] if k in self.previous else None
         previous_keys = set(self.previous.keys())
-        for k in previous_keys:
-            forward_transfer[k] = self.previous[k] - self.initial[k]
-
-        return forward_transfer
+        return {k: self.previous[k] - self.initial[k] for k in previous_keys}
 
     def reset(self) -> None:
-        self.previous: Dict[int, float] = dict()
+        self.previous: Dict[int, float] = {}
 
 
 class GenericExperienceForwardTransfer(PluginMetric[Dict[int, float]]):
@@ -193,11 +185,10 @@ class GenericExperienceForwardTransfer(PluginMetric[Dict[int, float]]):
             self.update(
                 self.eval_exp_id, self.metric_result(strategy), initial=True
             )
-        else:
-            if self.train_exp_id == self.eval_exp_id - 1:
-                self.update(self.eval_exp_id, self.metric_result(strategy))
+        elif self.train_exp_id == self.eval_exp_id - 1:
+            self.update(self.eval_exp_id, self.metric_result(strategy))
 
-                return self._package_result(strategy)
+            return self._package_result(strategy)
 
     def _package_result(self, strategy: "SupervisedTemplate") -> MetricResult:
         # Only after the previous experience was trained on can we return the
@@ -207,10 +198,7 @@ class GenericExperienceForwardTransfer(PluginMetric[Dict[int, float]]):
             metric_name = get_metric_name(self, strategy, add_experience=True)
             plot_x_position = strategy.clock.train_iterations
 
-            metric_values = [
-                MetricValue(self, metric_name, result, plot_x_position)
-            ]
-            return metric_values
+            return [MetricValue(self, metric_name, result, plot_x_position)]
 
     def metric_update(self, strategy):
         raise NotImplementedError
@@ -341,9 +329,7 @@ class GenericStreamForwardTransfer(GenericExperienceForwardTransfer):
 
         phase_name, _ = phase_and_task(strategy)
         stream = stream_type(strategy.experience)
-        metric_name = "{}/{}_phase/{}_stream".format(
-            str(self), phase_name, stream
-        )
+        metric_name = f"{str(self)}/{phase_name}_phase/{stream}_stream"
         plot_x_position = strategy.clock.train_iterations
 
         return [MetricValue(self, metric_name, metric_value, plot_x_position)]

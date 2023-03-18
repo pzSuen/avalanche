@@ -255,7 +255,7 @@ class _ICaRLPlugin(SupervisedPlugin):
 
             class_patterns = []
             mapped_prototypes = []
-            for idx, (class_pt, _, _) in enumerate(eval_dataloader):
+            for class_pt, _, _ in eval_dataloader:
                 class_pt = class_pt.to(strategy.device)
                 class_patterns.append(class_pt)
                 with torch.no_grad():
@@ -276,7 +276,7 @@ class _ICaRLPlugin(SupervisedPlugin):
             w_t = mu
 
             i, added, selected = 0, 0, []
-            while not added == nb_protos_cl and i < 1000:
+            while added != nb_protos_cl and i < 1000:
                 tmp_t = torch.mm(w_t.unsqueeze(0), D)
                 ind_max = torch.argmax(tmp_t)
 

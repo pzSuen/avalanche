@@ -65,6 +65,6 @@ def test_multiple_envs():
         assert exp.task_label == i
     # while shallow copies in eval behave like the ones in train
     assert len(rl_scenario.eval_stream) == 2
-    for i, exp in enumerate(rl_scenario.eval_stream):
+    for exp in rl_scenario.eval_stream:
         assert exp.task_label == 0
         assert exp.environment.spec.id == envs[0].spec.id

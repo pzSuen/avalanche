@@ -326,8 +326,7 @@ class DetectionMetrics(PluginMetric[dict]):
             with open(self.current_filename, "w") as f:
                 json.dump(self.current_outputs, f, cls=TensorEncoder)
 
-        packaged_results = self._package_result(strategy)
-        return packaged_results
+        return self._package_result(strategy)
 
     def _package_result(self, strategy):
         base_metric_name = get_metric_name(
@@ -342,7 +341,7 @@ class DetectionMetrics(PluginMetric[dict]):
         metric_values = []
         for iou, iou_dict in result_dict.items():
             for metric_key, metric_value in iou_dict.items():
-                metric_name = base_metric_name + f"/{iou}/{metric_key}"
+                metric_name = f"{base_metric_name}/{iou}/{metric_key}"
                 metric_values.append(
                     MetricValue(
                         self, metric_name, metric_value, plot_x_position
@@ -459,9 +458,10 @@ def get_detection_api_from_dataset(
 
     for supported_n, supported_t in supported_types:
         candidate_api = getattr(dataset, supported_n, None)
-        if candidate_api is not None:
-            if isinstance(candidate_api, supported_t):
-                return candidate_api
+        if candidate_api is not None and isinstance(
+            candidate_api, supported_t
+        ):
+            return candidate_api
     if none_if_not_found:
         return None
     elif default_to_coco:
@@ -481,15 +481,11 @@ def convert_to_coco_api(ds):
     dataset = {"images": [], "categories": [], "annotations": []}
     categories = set()
     for img_idx in range(len(ds)):
-        img_dict = {}
-
         # find better way to get target
         # targets = ds.get_annotations(img_idx)
         img, targets, *_ = ds[img_idx]
-        img_dict["height"] = img.shape[-2]
-        img_dict["width"] = img.shape[-1]
         image_id = targets["image_id"].item()
-        img_dict["id"] = image_id
+        img_dict = {"height": img.shape[-2], "width": img.shape[-1], "id": image_id}
         dataset["images"].append(img_dict)
         bboxes = targets["boxes"].clone()
         bboxes[:, 2:] -= bboxes[:, :2]
@@ -506,10 +502,7 @@ def convert_to_coco_api(ds):
             keypoints = keypoints.reshape(keypoints.shape[0], -1).tolist()
         num_objs = len(bboxes)
         for i in range(num_objs):
-            ann = {}
-            ann["image_id"] = image_id
-            ann["bbox"] = bboxes[i]
-            ann["category_id"] = labels[i]
+            ann = {"image_id": image_id, "bbox": bboxes[i], "category_id": labels[i]}
             categories.add(labels[i])
             ann["area"] = areas[i]
             ann["iscrowd"] = iscrowd[i]

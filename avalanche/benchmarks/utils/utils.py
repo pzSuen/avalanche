@@ -41,9 +41,7 @@ def tensor_as_list(sequence) -> List:
         return sequence
     if not isinstance(sequence, Iterable):
         return [sequence]
-    if isinstance(sequence, Tensor):
-        return sequence.tolist()
-    return list(sequence)
+    return sequence.tolist() if isinstance(sequence, Tensor) else list(sequence)
 
 
 def _indexes_grouped_by_classes(
@@ -85,17 +83,7 @@ def _indexes_grouped_by_classes(
             result_per_class[class_id].sort()
         result.extend(result_per_class[class_id])
 
-    if result == patterns_indexes and indexes_was_none:
-        # Result is [0, 1, 2, ..., N] and patterns_indexes was originally None
-        # This means that the user tried to obtain a full Dataset
-        # (indexes_was_none) only ordered according to the sort_indexes and
-        # sort_classes parameters. However, sort_indexes+sort_classes returned
-        # the plain pattern sequence as it already is. So the original Dataset
-        # already satisfies the sort_indexes+sort_classes constraints.
-        # By returning None, we communicate that the Dataset can be taken as-is.
-        return None
-
-    return result
+    return None if result == patterns_indexes and indexes_was_none else result
 
 
 def grouped_and_ordered_indexes(
@@ -144,9 +132,7 @@ def grouped_and_ordered_indexes(
 
     # We are here only because patterns_indexes != None and sort_indexes is True
     patterns_indexes = tensor_as_list(patterns_indexes)
-    result = list(patterns_indexes)  # Make sure we're working on a copy
-    result.sort()
-    return result
+    return sorted(patterns_indexes)
 
 
 def concat_datasets_sequentially(
@@ -236,11 +222,8 @@ def concat_datasets_sequentially(
         # Hence, a list of size equal to the maximum class index is created
         # Only elements corresponding to the present classes are remapped
         class_mapping = [-1] * (max(dataset_classes) + 1)
-        j = 0
-        for i in dataset_classes:
+        for j, i in enumerate(dataset_classes):
             class_mapping[i] = new_classes[j]
-            j += 1
-
         # Create remapped datasets and append them to the final list
         remapped_train_datasets.append(
             classification_subset(train_set, class_mapping=class_mapping)

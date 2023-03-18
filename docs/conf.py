@@ -376,7 +376,7 @@ def coverage_post_process(app, exception):
     # we collected what has been already documented by sphinx to compare it
     # with the full list of classes of Avalanche.
     doc_classes = app.env.domaindata['py']['objects']
-    doc_classes = set([s.split('.')[-1] for s in doc_classes])
+    doc_classes = {s.split('.')[-1] for s in doc_classes}
     # print(doc_classes)
     # STRONG ASSUMPTION HERE: unique names for classes in different namespaces.
     # Otherwise, we need to detect the case when mylib.Type is documented but
@@ -394,15 +394,17 @@ def coverage_post_process(app, exception):
     # print("Search classes:")
     try:
         lib_classes = set()
-        for _, modname, ispkg in pkgutil.walk_packages(
-                path=avalanche.__path__,
-                prefix=avalanche.__name__ + '.'):
+        for _, modname, ispkg in pkgutil.walk_packages(path=avalanche.__path__, prefix=f'{avalanche.__name__}.'):
 
             # print("MODULE: " + modname)
             try:
                 for name, obj in inspect.getmembers(sys.modules[modname]):
                     # print(name)
-                    if inspect.isclass(obj) and obj.__module__.startswith('avalanche') and is_not_internal(obj.__module__ + '.' + name):
+                    if (
+                        inspect.isclass(obj)
+                        and obj.__module__.startswith('avalanche')
+                        and is_not_internal(f'{obj.__module__}.{name}')
+                    ):
                         # print("CLASS: " + obj.__module__ + '.' + obj.__name__)
                         lib_classes.add(name)
             except Exception as e:
@@ -437,10 +439,7 @@ def get_attributes(item, obj, modulename):
     Fixes import errors when documenting inherited attributes with autosummary.
     """
     module = import_module(modulename)
-    if hasattr(getattr(module, obj), item):
-        return f"~{obj}.{item}"
-    else:
-        return ""
+    return f"~{obj}.{item}" if hasattr(getattr(module, obj), item) else ""
 
 
 FILTERS["get_attributes"] = get_attributes

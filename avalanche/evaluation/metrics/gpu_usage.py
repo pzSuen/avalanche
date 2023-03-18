@@ -60,10 +60,9 @@ class MaxGPU(Metric[float]):
                 "GPU metric called with negative GPU id." "GPU logging disabled"
             )
             self.gpu_id = None
-        else:
-            if gpu_id >= n_gpus:
-                warnings.warn(f"GPU {gpu_id} not found. Using GPU 0.")
-                self.gpu_id = 0
+        elif gpu_id >= n_gpus:
+            warnings.warn(f"GPU {gpu_id} not found. Using GPU 0.")
+            self.gpu_id = 0
 
         self.thread = None
         """

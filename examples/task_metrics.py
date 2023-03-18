@@ -155,7 +155,7 @@ def main(args):
     # TRAINING LOOP
     print("Starting experiment...")
     results = []
-    for i, experience in enumerate(benchmark.train_stream):
+    for experience in benchmark.train_stream:
         print("Start of experience: ", experience.current_experience)
         print("Current Classes: ", experience.classes_in_this_experience)
 

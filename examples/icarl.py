@@ -58,8 +58,7 @@ def icarl_cifar100_augment_data(img):
         random_cropped[:, :, :] = padded[
             :, crop[0] : (crop[0] + 32), crop[1] : (crop[1] + 32)
         ][:, :, ::-1]
-    t = torch.tensor(random_cropped)
-    return t
+    return torch.tensor(random_cropped)
 
 
 def run_experiment(config):
@@ -171,7 +170,7 @@ def run_experiment(config):
     )
 
     for i, exp in enumerate(benchmark.train_stream):
-        eval_exps = [e for e in benchmark.test_stream][: i + 1]
+        eval_exps = list(benchmark.test_stream)[: i + 1]
         strategy.train(exp, num_workers=4)
         strategy.eval(eval_exps, num_workers=4)
 

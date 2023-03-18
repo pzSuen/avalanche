@@ -192,16 +192,15 @@ class ObjectDetectionTemplate(SupervisedTemplate):
         loss dictionary is returned when evaluating.
         """
         if self.is_training:
-            return sum(loss for loss in self.detection_loss_dict.values())
-        else:
-            # eval does not compute the loss directly.
-            # Metrics will use self.mb_output and self.detection_predictions
-            # to compute AP, AR, ...
-            self.detection_predictions = {
-                target["image_id"].item(): output
-                for target, output in zip(self.mb_y, self.mb_output)
-            }
-            return torch.zeros((1,))
+            return sum(self.detection_loss_dict.values())
+        # eval does not compute the loss directly.
+        # Metrics will use self.mb_output and self.detection_predictions
+        # to compute AP, AR, ...
+        self.detection_predictions = {
+            target["image_id"].item(): output
+            for target, output in zip(self.mb_y, self.mb_output)
+        }
+        return torch.zeros((1,))
 
     def forward(self):
         """
@@ -223,11 +222,11 @@ class ObjectDetectionTemplate(SupervisedTemplate):
     def _unpack_minibatch(self):
         # Unpack minibatch mainly takes care of moving tensors to devices.
         # In addition, it will prepare the targets in the proper dict format.
-        images = list(image.to(self.device) for image in self.mbatch[0])
+        images = [image.to(self.device) for image in self.mbatch[0]]
         targets = [
             {k: v.to(self.device) for k, v in t.items()} for t in self.mbatch[1]
         ]
-        
+
         mbatch = [images, targets, 
                   torch.as_tensor(self.mbatch[2]).to(self.device)]
         self.mbatch = tuple(mbatch)

@@ -84,13 +84,10 @@ class ClassificationSubSequence(Dataset):
         if path is None:
             return endless_cl_sim_data.default_classification_labelmap
 
-        # If path is valid, load labelmap from json file
         elif Path(path).exists():
             with open(path) as file:
                 json_array = json.load(file)
-                labelmap = json_array["SegmentationClasses"]
-                return labelmap
-
+                return json_array["SegmentationClasses"]
         # Finally, raise value error
         raise ValueError(f"path: {path} does not exist!")
 
@@ -167,9 +164,7 @@ class VideoSubSequence(Dataset):
 
     def _pil_loader(self, file_path, is_target=False):
         with open(file_path, "rb") as f:
-            convert_identifier = "RGB"
-            if is_target:
-                convert_identifier = "L"
+            convert_identifier = "L" if is_target else "RGB"
             img = (
                 Image.open(f)
                 .convert(convert_identifier)
@@ -191,28 +186,29 @@ class VideoSubSequence(Dataset):
 
     def _load_labelmap(self, labelmap_file):
         labelmap = {}
-        if Path(labelmap_file).exists():
-            with open(labelmap_file) as file:
-                json_array = json.load(file)
-
-                segMin = json_array[0]["ObjectClassMapping"]
-                segMax = json_array[1]["ObjectClassMapping"]
-
-                for key in segMin:
-                    labelmap[key] = [segMin[key], segMax[key]]
-        else:
+        if not Path(labelmap_file).exists():
             raise ValueError(f"labelmap_file: {labelmap_file} does not exist!")
+        with open(labelmap_file) as file:
+            json_array = json.load(file)
+
+            segMin = json_array[0]["ObjectClassMapping"]
+            segMax = json_array[1]["ObjectClassMapping"]
+
+            for key in segMin:
+                labelmap[key] = [segMin[key], segMax[key]]
         return labelmap
 
     def _get_label_name(self, label):
         for key in self.labelmap:
             min_val, max_val = self.labelmap[key]
-            if min_val == max_val:
-                if label == min_val:
-                    return key
-            else:
-                if label >= min_val and label <= max_val:
-                    return key
+            if (
+                min_val == max_val
+                and label == min_val
+                or min_val != max_val
+                and label >= min_val
+                and label <= max_val
+            ):
+                return key
         raise ValueError(f"label: {label} could not be converted!")
 
     def _convert_target(self, target):
@@ -477,23 +473,26 @@ class EndlessCLSimDataset(DownloadableDataset):
                 # If directory
                 if Path(data_content).is_dir():
                     dir_name = data_content.split(os.path.sep)[-1]
-                    if "Color" == dir_name:
+                    if dir_name == "Color":
                         # Extend color path
                         color_path = (
                             data_content + os.path.sep + "0" + os.path.sep
                         )
                         # Get all files
-                        for file_name in sorted(os.listdir(color_path)):
-                            image_paths.append(color_path + file_name)
-                    elif "Seg" == dir_name:
+                        image_paths.extend(
+                            color_path + file_name
+                            for file_name in sorted(os.listdir(color_path))
+                        )
+                    elif dir_name == "Seg":
                         # Extend seg path
                         seg_path = (
                             data_content + os.path.sep + "0" + os.path.sep
                         )
                         # Get all files
-                        for file_name in sorted(os.listdir(seg_path)):
-                            target_paths.append(seg_path + file_name)
-
+                        target_paths.extend(
+                            seg_path + file_name
+                            for file_name in sorted(os.listdir(seg_path))
+                        )
                 # If file
                 if Path(data_content).is_file():
                     if "Sequence.json" in data_content:
@@ -502,7 +501,7 @@ class EndlessCLSimDataset(DownloadableDataset):
                         segmentation_file = data_content
 
             # Final checks
-            if not len(image_paths) == len(target_paths):
+            if len(image_paths) != len(target_paths):
                 print("Not equal number of images and targets!")
                 return False
             if sequence_file is None:
@@ -575,7 +574,7 @@ class EndlessCLSimDataset(DownloadableDataset):
         data_name = self._get_scenario_data()
 
         if self.verbose:
-            print("Downloading " + data_name[1] + "...")
+            print(f"Downloading {data_name[1]}...")
         file = self._download_file(data_name[1], data_name[0], data_name[2])
         if data_name[1].endswith(".zip"):
             if self.verbose:
@@ -584,12 +583,10 @@ class EndlessCLSimDataset(DownloadableDataset):
             extract_root = self._extract_archive(file, extract_subdir)
 
             # see all extracted files and extract all .zip again
-            extract_root_file_list = glob.glob(str(extract_root) + "/*")
+            extract_root_file_list = glob.glob(f"{str(extract_root)}/*")
             for file_name in extract_root_file_list:
                 sub_file_name = file_name.split("/")[-1]
-                extract_subsubdir = (
-                    extract_subdir + "/" + sub_file_name.split(".")[0]
-                )
+                extract_subsubdir = f"{extract_subdir}/" + sub_file_name.split(".")[0]
                 if self.verbose:
                     print(f"Extracting: {sub_file_name} to {extract_subdir}")
                 self._extract_archive(
@@ -612,29 +609,26 @@ class EndlessCLSimDataset(DownloadableDataset):
             for data_name in endless_cl_sim_data.data:
                 name = data_name[0].split(".")[0]
                 # Omit non selected directories
-                if str(scenario_data_name) == str(name):
-                    # Check there is such a directory
-                    if (self.root / name).exists():
-                        if match_path is not None:
-                            raise ValueError(
-                                "Two directories match the selected scenario!"
-                            )
-                        match_path = str(self.root / name)
+                if (
+                    str(scenario_data_name) == str(name)
+                    and (self.root / name).exists()
+                ):
+                    if match_path is not None:
+                        raise ValueError(
+                            "Two directories match the selected scenario!"
+                        )
+                    match_path = str(self.root / name)
 
             if match_path is None:
                 return False
 
-            if not self.semseg:
-                is_subsequence_preparation_done = (
-                    self._prepare_classification_subsequence_datasets(
-                        match_path
-                    )
+            is_subsequence_preparation_done = (
+                (self._prepare_video_subsequence_datasets(match_path))
+                if self.semseg
+                else (
+                    self._prepare_classification_subsequence_datasets(match_path)
                 )
-            else:
-                is_subsequence_preparation_done = (
-                    self._prepare_video_subsequence_datasets(match_path)
-                )
-
+            )
             if is_subsequence_preparation_done and self.verbose:
                 print("Data is loaded..")
             else:
@@ -642,17 +636,13 @@ class EndlessCLSimDataset(DownloadableDataset):
             return True
 
         # If a 'generic'-endless-cl-sim-scenario has been selected
-        if not self.semseg:
-            is_subsequence_preparation_done = (
-                self._prepare_classification_subsequence_datasets(
-                    str(self.root)
-                )
+        is_subsequence_preparation_done = (
+            (self._prepare_video_subsequence_datasets(str(self.root)))
+            if self.semseg
+            else (
+                self._prepare_classification_subsequence_datasets(str(self.root))
             )
-        else:
-            is_subsequence_preparation_done = (
-                self._prepare_video_subsequence_datasets(str(self.root))
-            )
-
+        )
         if is_subsequence_preparation_done and self.verbose:
             print("Data is loaded...")
         else:
@@ -674,7 +664,7 @@ class EndlessCLSimDataset(DownloadableDataset):
             base_msg += url
             base_msg += "\n"
 
-        base_msg += "and place these files in " + str(self.root)
+        base_msg += f"and place these files in {str(self.root)}"
 
         return base_msg
 

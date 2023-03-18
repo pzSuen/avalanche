@@ -74,13 +74,10 @@ def detection_collate_mbatches_fn(mbatches):
         for mb_elem_idx, mb_elem in enumerate(mb):
             lists_dict[mb_elem_idx].append(mb_elem)
 
-    lists = []
-    for mb_elem_idx in range(max(lists_dict.keys()) + 1):
-        lists.append(
-            list(itertools.chain.from_iterable(lists_dict[mb_elem_idx]))
-        )
-
-    return lists
+    return [
+        list(itertools.chain.from_iterable(lists_dict[mb_elem_idx]))
+        for mb_elem_idx in range(max(lists_dict.keys()) + 1)
+    ]
 
 
 __all__ = [

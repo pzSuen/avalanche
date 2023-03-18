@@ -106,7 +106,7 @@ class MER(OnlineSupervisedMetaLearningTemplate):
         super()._before_inner_updates(**kwargs)
 
     def _inner_updates(self, **kwargs):
-        for inner_itr in range(self.n_inner_steps):
+        for _ in range(self.n_inner_steps):
             x, y, t = self.mb_x, self.mb_y, self.mb_task_id
             x, y, t = self.buffer.get_batch(x, y, t)
 

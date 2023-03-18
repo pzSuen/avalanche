@@ -90,9 +90,7 @@ class AvalancheDataset(FlatData):
             applied by this dataset.
         :param transform_groups: Avalanche transform groups.
         """
-        if isinstance(datasets, TorchDataset) or isinstance(
-            datasets, AvalancheDataset
-        ):
+        if isinstance(datasets, (TorchDataset, AvalancheDataset)):
             warnings.warn(
                 "AvalancheDataset constructor has been changed. "
                 "Please check the documentation for the correct usage. You can"
@@ -102,7 +100,7 @@ class AvalancheDataset(FlatData):
             )
 
         if issubclass(type(datasets), TorchDataset) or  \
-                issubclass(type(datasets), AvalancheDataset):
+                    issubclass(type(datasets), AvalancheDataset):
             datasets = [datasets]
 
         # NOTES on implementation:
@@ -129,8 +127,7 @@ class AvalancheDataset(FlatData):
                 ld = sum(len(d) for d in self._datasets)
                 if len(da) != ld:
                     raise ValueError(
-                        "Data attribute {} has length {} but the dataset "
-                        "has length {}".format(da.name, len(da), ld)
+                        f"Data attribute {da.name} has length {len(da)} but the dataset has length {ld}"
                     )
         if isinstance(transform_groups, dict):
             transform_groups = TransformGroups(transform_groups)
@@ -171,7 +168,7 @@ class AvalancheDataset(FlatData):
         ####################################
         # Init collate_fn
         ####################################
-        if len(datasets) > 0:
+        if datasets:
             self.collate_fn = self._init_collate_fn(datasets[0], collate_fn)
         else:
             self.collate_fn = default_collate

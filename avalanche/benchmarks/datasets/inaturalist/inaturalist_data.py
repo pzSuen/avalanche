@@ -169,7 +169,7 @@ class INATURALIST_DATA(object):
         data2download = train_data if self.trainval else test_data
 
         for name in data2download:
-            self.log.info("Downloading " + name[1] + "...")
+            self.log.info(f"Downloading {name[1]}...")
             save_name = os.path.join(self.data_folder, name[0])
             if not os.path.exists(save_name):
                 with TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024,

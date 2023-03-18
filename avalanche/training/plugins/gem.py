@@ -27,7 +27,7 @@ class GEMPlugin(SupervisedPlugin):
 
         super().__init__()
 
-        self.patterns_per_experience = int(patterns_per_experience)
+        self.patterns_per_experience = patterns_per_experience
         self.memory_strength = memory_strength
 
         self.memory_x, self.memory_y, self.memory_tid = {}, {}, {}
@@ -40,33 +40,34 @@ class GEMPlugin(SupervisedPlugin):
         experiences.
         """
 
-        if strategy.clock.train_exp_counter > 0:
-            G = []
+        if strategy.clock.train_exp_counter <= 0:
+            return
+        strategy.model.train()
+        G = []
+        for t in range(strategy.clock.train_exp_counter):
             strategy.model.train()
-            for t in range(strategy.clock.train_exp_counter):
-                strategy.model.train()
-                strategy.optimizer.zero_grad()
-                xref = self.memory_x[t].to(strategy.device)
-                yref = self.memory_y[t].to(strategy.device)
-                out = avalanche_forward(
-                    strategy.model, xref, self.memory_tid[t]
-                )
-                loss = strategy._criterion(out, yref)
-                loss.backward()
+            strategy.optimizer.zero_grad()
+            xref = self.memory_x[t].to(strategy.device)
+            yref = self.memory_y[t].to(strategy.device)
+            out = avalanche_forward(
+                strategy.model, xref, self.memory_tid[t]
+            )
+            loss = strategy._criterion(out, yref)
+            loss.backward()
 
-                G.append(
-                    torch.cat(
-                        [
-                            p.grad.flatten()
-                            if p.grad is not None
-                            else torch.zeros(p.numel(), device=strategy.device)
-                            for p in strategy.model.parameters()
-                        ],
-                        dim=0,
-                    )
+            G.append(
+                torch.cat(
+                    [
+                        p.grad.flatten()
+                        if p.grad is not None
+                        else torch.zeros(p.numel(), device=strategy.device)
+                        for p in strategy.model.parameters()
+                    ],
+                    dim=0,
                 )
+            )
 
-            self.G = torch.stack(G)  # (experiences, parameters)
+        self.G = torch.stack(G)  # (experiences, parameters)
 
     @torch.no_grad()
     def after_backward(self, strategy, **kwargs):

@@ -71,10 +71,14 @@ class AlternativeValues:
         :return: The best supported representation. Returns None if no supported
             representation is found.
         """
-        for alternative in self.alternatives:
-            if isinstance(alternative, supported_types):
-                return alternative
-        return None
+        return next(
+            (
+                alternative
+                for alternative in self.alternatives
+                if isinstance(alternative, supported_types)
+            ),
+            None,
+        )
 
 
 class MetricValue(object):

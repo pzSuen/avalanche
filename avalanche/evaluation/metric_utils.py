@@ -260,17 +260,11 @@ def phase_and_task(strategy: "SupervisedTemplate") -> Tuple[str, int]:
     """
     if hasattr(strategy.experience, "task_labels"):
         task = strategy.experience.task_labels
-        if len(task) > 1:
-            task = None  # task labels per patterns
-        else:
-            task = task[0]
+        task = None if len(task) > 1 else task[0]
     else:
         task = None
 
-    if strategy.is_eval:
-        return EVAL, task
-    else:
-        return TRAIN, task
+    return (EVAL, task) if strategy.is_eval else (TRAIN, task)
 
 
 def bytes2human(n):
@@ -280,14 +274,12 @@ def bytes2human(n):
     # >>> bytes2human(100001221)
     # '95.4M'
     symbols = ("K", "M", "G", "T", "P", "E", "Z", "Y")
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
+    prefix = {s: 1 << (i + 1) * 10 for i, s in enumerate(symbols)}
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return "%.1f%s" % (value, s)
-    return "%sB" % n
+    return f"{n}B"
 
 
 def default_metric_name_template(metric_info: Dict[str, Any]):
